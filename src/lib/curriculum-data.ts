@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Sadece Sözel Müfredat Verisi (TYT-AYT)
  * Matematik, Geometri, Fen Bilimleri ve Dil Bilgisi konuları tamamen çıkarılmıştır.
@@ -62,7 +61,6 @@ export const AYT_SOZEL_TOPICS: Record<string, string[]> = {
   ]
 };
 
-// Geriye dönük uyumluluk için birleşik havuz
 export const YKS_TM_TOPICS: Record<string, string[]> = {
   ...TYT_SOZEL_TOPICS,
   ...AYT_SOZEL_TOPICS
