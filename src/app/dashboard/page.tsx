@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc, useFirestore } from '@/firebase';
@@ -18,12 +19,18 @@ import {
   Menu,
   X,
   Loader2,
+  MessageSquare,
+  Users,
+  Compass
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useState, useEffect, Suspense } from 'react';
 
 import { StudentView } from '@/components/dashboard/student-view';
+import { TeacherView } from '@/components/dashboard/teacher-view';
+import { AdminView } from '@/components/dashboard/admin-view';
+import { SchoolAdminView } from '@/components/dashboard/school-admin-view';
 
 import {
   doc,
@@ -163,6 +170,8 @@ function DashboardContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // SİMÜLASYON MANTIĞI: simulate query param varsa o kullanıcıyı göster
   const simulateUid = searchParams.get('simulate');
   const targetUid = simulateUid || user?.uid;
 
@@ -190,7 +199,7 @@ function DashboardContent() {
             updatedAt: serverTimestamp(),
           }, { merge: true });
         }
-        if (!planLoading && !studyPlan && userData) {
+        if (!planLoading && !studyPlan && userData && userData.role === 'student') {
           const adaptivePlan = generateAdaptivePlan(DEFAULT_PLAN_START, userData.completedTopics || {});
           await setDoc(doc(db, 'studyPlans', user.uid), {
             userId: user.uid,
@@ -210,6 +219,8 @@ function DashboardContent() {
 
   const navItems = [
     { id: 'dashboard', label: 'Anasayfa', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'discover', label: 'Keşfet / Mentor', icon: Compass, path: '/dashboard/discover' },
+    { id: 'messages', label: 'Mesajlar', icon: MessageSquare, path: '/dashboard/messages' },
     { id: 'planning', label: 'Akademik Terminal', icon: Calendar, path: '/dashboard/planning' },
     { id: 'topics', label: 'Konu Takibi', icon: BookOpen, path: '/dashboard/topics' },
     { id: 'test-analysis', label: 'Test Analizi', icon: BarChart3, path: '/dashboard/test-analysis' },
@@ -220,15 +231,39 @@ function DashboardContent() {
     { id: 'ai-assistant', label: 'AI Asistan', icon: Brain, path: '/dashboard/ai-analysis' },
   ];
 
+  const renderView = () => {
+    // Simülasyon modunda her zaman öğrenci görünümünü göster
+    if (simulateUid) return <StudentView user={{uid: simulateUid}} userData={userData} />;
+    
+    if (!userData) return <div className="p-20 text-center"><Loader2 className="animate-spin h-10 w-10 mx-auto" /></div>;
+
+    switch (userData.role) {
+      case 'teacher': return <TeacherView user={user} userData={userData} />;
+      case 'admin': return <AdminView user={user} userData={userData} />;
+      case 'school_admin': return <SchoolAdminView user={user} userData={userData} />;
+      default: return <StudentView user={user} userData={userData} />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row relative overflow-hidden">
+      {/* SİMÜLASYON UYARI ŞERİDİ */}
+      {simulateUid && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-accent text-primary p-3 flex items-center justify-center gap-4 shadow-2xl font-black text-[10px] uppercase tracking-widest">
+           <Eye className="h-4 w-4 animate-pulse" /> SİMÜLASYON MODU AKTİF: {userData?.displayName} TERMİNALİ
+           <Button onClick={() => router.push('/dashboard')} size="sm" className="h-8 rounded-lg bg-primary text-white border-none text-[8px]">SİMÜLASYONU KAPAT</Button>
+        </div>
+      )}
+
       <header className="md:hidden h-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-[60]">
         <div className="text-xl font-black italic tracking-tighter text-primary uppercase">DEK <span className="text-accent">AI</span></div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded-xl h-12 w-12 bg-slate-50">
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
       </header>
+
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] md:hidden" onClick={() => setSidebarOpen(false)} />}
+
       <aside className={cn(`w-[280px] bg-white border-r border-slate-100 flex flex-col fixed md:sticky inset-y-0 left-0 z-[58] transition-transform duration-500 md:translate-x-0 h-screen`, sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0')}>
         <div className="p-8 border-b border-slate-50 hidden md:block">
           <div className="text-2xl font-black italic tracking-tighter text-primary uppercase leading-none">DEK <span className="text-accent">AI</span></div>
@@ -248,8 +283,9 @@ function DashboardContent() {
           </nav>
         </ScrollArea>
       </aside>
-      <main className="flex-1 min-w-0 overflow-x-hidden">
-        <StudentView user={user} userData={userData || { role: 'student', targetExam: 'YKS_SOZEL' }} />
+
+      <main className={cn("flex-1 min-w-0 overflow-x-hidden", simulateUid && "mt-12")}>
+        {renderView()}
       </main>
     </div>
   );

@@ -9,14 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogDescription 
-} from '@/components/ui/dialog';
-import { 
   Search, Users, Star, ShieldCheck, GraduationCap, 
   Brain, Sparkles, Filter, ArrowRight, UserCheck,
   Target, Zap, MessageSquare, Compass, ShieldAlert,
@@ -26,28 +18,8 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, addDoc, arrayUnion } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-
-const expertTypes = [
-  "Branş Öğretmeni",
-  "Eğitim Koçu",
-  "Akademik Koç",
-  "Rehber Öğretmen",
-  "Kariyer Danışmanı",
-  "Motivasyon Koçu",
-  "Psikolojik Danışman",
-  "Kurumsal Danışman"
-];
-
-const branches = [
-  "Matematik", "Türkçe", "Fen Bilimleri", "Sosyal Bilgiler", "İngilizce", 
-  "Fizik", "Kimya", "Biyoloji", "Tarih", "Coğrafya", "Edebiyat", "Geometri", "Rehberlik"
-];
-
-const exams = [
-  "LGS", "TYT", "AYT", "YKS", "YDT", "KPSS", "ALES", "DGS", "AGS", "Hafızlık", "Dil Eğitimi", "Akademik Destek"
-];
 
 export default function DiscoverPage() {
   const { user } = useUser();
@@ -55,428 +27,144 @@ export default function DiscoverPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { data: userData } = useDoc<any>(user?.uid ? `users/${user.uid}` : null);
-  const { data: teachers, loading } = useCollection<any>('users', (q: any) => q); 
-
-  const [search, setSearch] = useState('');
-  const [selectedExpertType, setSelectedExpertType] = useState('all');
-  const [selectedBranch, setSelectedBranch] = useState('all');
-  const [selectedExam, setSelectedExam] = useState('all');
-  const [isAiMatching, setIsAiMatching] = useState(false);
   
+  const [search, setSearch] = useState('');
   const [teacherCode, setTeacherCode] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [sentRequests, setSentRequests] = useState<string[]>([]);
-  const [sentCodeRequests, setSentCodeRequests] = useState<string[]>([]);
 
-  const teacherList = useMemo(() => {
-    return (teachers || []).filter(t => t.role === 'teacher');
-  }, [teachers]);
+  // Tüm öğretmenleri getir
+  const { data: teachers = [], loading } = useCollection<any>('users', where('role', '==', 'teacher'));
 
   const filteredTeachers = useMemo(() => {
-    return teacherList.filter(t => {
-      const searchLower = search.toLowerCase();
-      const matchesSearch = 
-        t.displayName?.toLowerCase().includes(searchLower) || 
-        t.branch?.toLowerCase().includes(searchLower) || 
-        t.school?.toLowerCase().includes(searchLower) ||
-        t.bio?.toLowerCase().includes(searchLower);
-
-      const matchesExpertType = selectedExpertType === 'all' || t.coachType === selectedExpertType;
-      
-      let matchesBranch = true;
-      if (selectedBranch === 'hidden') {
-        matchesBranch = t.hideBranch === true;
-      } else if (selectedBranch === 'only_coaches') {
-        matchesBranch = !t.branch || t.branch === 'Genel' || t.coachType?.includes('Koçu');
-      } else if (selectedBranch !== 'all') {
-        matchesBranch = t.branch === selectedBranch;
-      }
-
-      const matchesExam = selectedExam === 'all' || t.targetExam === selectedExam;
-      
-      return matchesSearch && matchesExpertType && matchesBranch && matchesExam;
-    });
-  }, [teacherList, search, selectedExpertType, selectedBranch, selectedExam]);
-
-  const calculateMatchScore = (teacher: any) => {
-    if (!userData || !teacher) return 85;
-    let score = 70;
-    if (teacher.targetExam === userData.targetExam) score += 20;
-    if (teacher.branch === userData.branch) score += 5;
-    return Math.min(score + Math.floor(Math.random() * 5), 100);
-  };
-
-  const handleAiMatch = () => {
-    setIsAiMatching(true);
-    setTimeout(() => {
-      setIsAiMatching(false);
-    }, 1500);
-  };
+    if (!search.trim()) return teachers;
+    const s = search.toLocaleLowerCase('tr-TR');
+    return teachers.filter(t => (t.displayName?.toLocaleLowerCase('tr-TR') || '').includes(s) || (t.branch?.toLocaleLowerCase('tr-TR') || '').includes(s));
+  }, [teachers, search]);
 
   const handleSendRequest = async (teacherId: string, teacherName: string) => {
-    if (!db || !user) return;
-    
+    if (!db || !user?.uid) return;
     try {
       await addDoc(collection(db, 'requests'), {
         studentId: user.uid,
         teacherId: teacherId,
         status: 'pending',
-        type: 'connection',
-        message: `${userData?.displayName || 'Bir öğrenci'} sizinle akademik koçluk için bağlantı kurmak istiyor.`,
-        createdAt: serverTimestamp(),
+        message: `${userData?.displayName || 'Bir öğrenci'} sizinle akademik bağ kurmak istiyor.`,
+        createdAt: serverTimestamp()
       });
-
-      setSentRequests(prev => [...prev, teacherId]);
-
-      toast({
-        title: 'İstek Gönderildi',
-        description: `${teacherName} hocamıza talebiniz başarıyla iletildi.`,
-        className: "bg-primary text-white rounded-[2rem]"
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'İstek gönderilirken bir sorun oluştu.'
-      });
-    }
-  };
-
-  const handleSendCodeRequest = async (teacherId: string, teacherName: string) => {
-    if (!db || !user) return;
-    
-    try {
-      await addDoc(collection(db, 'requests'), {
-        studentId: user.uid,
-        teacherId: teacherId,
-        status: 'pending',
-        type: 'code_request',
-        message: `${userData?.displayName || 'Bir öğrenci'} sizden sisteme giriş için aktivasyon kodu talep ediyor.`,
-        createdAt: serverTimestamp(),
-      });
-
-      setSentCodeRequests(prev => [...prev, teacherId]);
-
-      toast({
-        title: 'Kod İsteği Gönderildi',
-        description: `${teacherName} hocamıza aktivasyon kodu talebiniz iletildi.`,
-        className: "bg-accent text-primary rounded-[2rem]"
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'Kod isteği gönderilirken bir sorun oluştu.'
-      });
+      toast({ title: 'İstek Gönderildi', description: `${teacherName} hocamıza talebiniz iletildi.`, className: "bg-primary text-white rounded-2xl" });
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Hata' });
     }
   };
 
   const handleConnectWithCode = async () => {
-    if (!db || !user || !teacherCode) return;
+    if (!db || !user?.uid || !teacherCode.trim()) return;
     setIsConnecting(true);
-    
     try {
-      const q = query(
-        collection(db, 'users'), 
-        where('activationCode', '==', teacherCode), 
-        where('role', '==', 'teacher')
-      );
+      const q = query(collection(db, 'users'), where('activationCode', '==', teacherCode.trim()), where('role', '==', 'teacher'));
+      const snap = await getDocs(q);
       
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const teacherData = querySnapshot.docs[0].data();
-        const userRef = doc(db, 'users', user.uid);
-        
-        await updateDoc(userRef, {
-          coachId: querySnapshot.docs[0].id,
-          updatedAt: serverTimestamp()
+      if (!snap.empty) {
+        const teacher = snap.docs[0].data();
+        await updateDoc(doc(db, 'users', user.uid), {
+          teacherIds: arrayUnion(teacher.uid)
         });
-
-        toast({
-          title: 'Bağlantı Başarılı',
-          description: `${teacherData.displayName} hocamızla başarıyla eşleştiniz!`,
-          className: "bg-primary text-white rounded-[2rem]"
-        });
-        
-        setIsDialogOpen(false);
+        toast({ title: 'Bağlantı Başarılı', description: `${teacher.displayName} hocanızla eşleştiniz.`, className: "bg-emerald-500 text-white rounded-2xl" });
         setTeacherCode('');
+        router.push('/dashboard');
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Hata',
-          description: 'Geçersiz aktivasyon kodu.'
-        });
+        toast({ variant: 'destructive', title: 'Hata', description: 'Geçersiz aktivasyon kodu.' });
       }
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'Bağlantı kurulurken bir sorun oluştu.'
-      });
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Hata' });
     } finally {
       setIsConnecting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-12 flex flex-col items-center justify-center min-h-[60vh] gap-6">
-        <div className="h-20 w-20 animate-spin rounded-[2.5rem] border-[6px] border-accent border-t-transparent shadow-[0_0_50px_rgba(245,158,11,0.2)]" />
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] animate-pulse italic text-primary">Uzmanlar Keşfediliyor...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6 lg:p-10 space-y-12 max-w-7xl mx-auto w-full animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex flex-col gap-6 w-full md:w-auto">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => router.push('/dashboard')} 
-              className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-primary hover:text-white transition-all shadow-sm"
-              title="Panelim"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => router.push('/')} 
-              className="h-12 w-12 rounded-xl bg-slate-100 hover:bg-primary hover:text-white transition-all shadow-sm"
-              title="Ana Sayfa"
-            >
-              <Home className="h-5 w-5" />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20">
-              <UserCheck className="h-3 w-3" /> Uzman Havuzu
-            </div>
-            <h2 className="text-5xl font-black tracking-tighter italic text-primary uppercase leading-none text-shadow-deep">
-              Geleceğini <br /><span className="text-accent text-shadow-accent">Doğru Kişiyle Planla</span>
-            </h2>
-          </div>
+    <div className="p-8 lg:p-14 space-y-12 max-w-7xl mx-auto w-full animate-in fade-in duration-1000 bg-[#F8FAFC]">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+        <div className="space-y-4">
+           <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><ArrowLeft className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
+           </div>
+           <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Compass className="h-3.5 w-3.5" /> MENTOR DISCOVERY v43.0</div>
+              <h2 className="text-6xl font-black tracking-tighter italic text-primary uppercase leading-none text-shadow-deep">Uzman <br /><span className="text-accent text-shadow-accent">Keşfet</span></h2>
+           </div>
         </div>
-        
-        <div className="flex flex-wrap gap-4 w-full md:w-auto">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline"
-                className="h-16 px-8 rounded-2xl border-2 border-primary/10 font-black text-xs uppercase tracking-widest gap-3 shadow-sm hover:bg-slate-50 group"
-              >
-                <QrCode className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                Kod İle Bağlan
+
+        <Card className="p-8 rounded-[3rem] bg-white border-none shadow-2xl space-y-6 min-w-[350px]">
+           <p className="text-[10px] font-black uppercase tracking-widest opacity-40 text-center italic">KOD İLE HIZLI BAĞLAN</p>
+           <div className="flex gap-4">
+              <Input 
+                value={teacherCode} 
+                onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
+                placeholder="DK-XXXX" 
+                className="h-14 rounded-xl bg-slate-50 border-none shadow-inner font-black tracking-widest text-center" 
+              />
+              <Button onClick={handleConnectWithCode} disabled={isConnecting} className="h-14 px-8 rounded-xl bg-primary hover:bg-accent text-white shadow-xl transition-all">
+                {isConnecting ? <Loader2 className="animate-spin h-5 w-5" /> : <Zap className="h-5 w-5" />}
               </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-[3rem] border-none shadow-[0_60px_120px_-30px_rgba(15,23,42,0.3)] p-10 max-w-md bg-white">
-              <DialogHeader className="space-y-4 text-center">
-                <div className="h-20 w-20 bg-accent/10 rounded-[1.75rem] flex items-center justify-center mx-auto mb-2">
-                  <Hash className="h-10 w-10 text-accent" />
-                </div>
-                <DialogTitle className="text-3xl font-black italic tracking-tighter uppercase text-primary">Eğitmen Kodu Gir</DialogTitle>
-                <DialogDescription className="font-medium italic">
-                  Hocanızdan aldığınız 10 haneli aktivasyon kodunu girerek anında koçluk almaya başlayın.
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-6 pt-6">
-                <div className="relative group">
-                  <Hash className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+           </div>
+        </Card>
+      </header>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
+         <Card className="xl:col-span-4 p-10 rounded-[3.5rem] border-none shadow-xl bg-primary text-white space-y-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/20 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform" />
+            <Brain className="h-12 w-12 text-accent animate-pulse" />
+            <div className="space-y-4 relative z-10">
+               <h3 className="text-3xl font-black italic tracking-tighter uppercase leading-none">Neden Bir Mentor?</h3>
+               <p className="text-sm font-bold italic opacity-60 leading-relaxed">Başarı sadece ders çalışmak değildir; doğru stratejiyi planlamaktır. Alanında uzman bir koç ile terminalini senkronize et, eksiklerini otonom olarak gidersin.</p>
+            </div>
+            <div className="space-y-4 pt-6 border-t border-white/10">
+               <div className="flex items-center gap-3"><CheckCircle2 className="h-4 w-4 text-accent" /><span className="text-[10px] font-black uppercase tracking-widest">Kişiye Özel Analiz</span></div>
+               <div className="flex items-center gap-3"><CheckCircle2 className="h-4 w-4 text-accent" /><span className="text-[10px] font-black uppercase tracking-widest">Anlık Mesajlaşma</span></div>
+               <div className="flex items-center gap-3"><CheckCircle2 className="h-4 w-4 text-accent" /><span className="text-[10px] font-black uppercase tracking-widest">KVKK Güvenli İletişim</span></div>
+            </div>
+         </Card>
+
+         <div className="xl:col-span-8 space-y-10">
+            <Card className="p-6 rounded-[2.5rem] border-none shadow-lg bg-white">
+               <div className="relative group">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/20 group-focus-within:text-accent transition-colors" />
                   <Input 
-                    placeholder="DK-XXXX-XXXX" 
-                    value={teacherCode}
-                    onChange={(e) => setTeacherCode(e.target.value.toUpperCase())}
-                    className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-black text-xl tracking-[0.2em] text-center pl-12 focus-visible:ring-accent focus-visible:bg-white transition-all uppercase"
+                    value={search} 
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="İsim veya uzmanlık alanı ara..." 
+                    className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner pl-16 font-bold text-lg" 
                   />
-                </div>
-                <Button 
-                  onClick={handleConnectWithCode}
-                  disabled={isConnecting || !teacherCode}
-                  className="w-full h-16 rounded-2xl bg-primary hover:bg-accent transition-all font-black text-xs uppercase tracking-widest gap-3 shadow-2xl shadow-primary/20"
-                >
-                  {isConnecting ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                  Bağlantıyı Kur
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Button 
-            onClick={handleAiMatch}
-            disabled={isAiMatching}
-            className="h-16 px-8 rounded-2xl bg-primary hover:bg-accent transition-all font-black text-xs uppercase tracking-widest gap-3 shadow-[0_20px_50px_-10px_rgba(15,23,42,0.3)] group"
-          >
-            {isAiMatching ? <Zap className="h-5 w-5 animate-spin" /> : <Brain className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />}
-            AI Uzman Eşleştir
-          </Button>
-        </div>
-      </div>
-
-      <Card className="rounded-[3rem] border-none shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] bg-white p-8 md:p-12 space-y-8">
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <div className="relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-accent transition-colors" />
-            <Input 
-              placeholder="Öğretmen, koç, uzmanlık alanı veya kurum ara..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-14 h-16 rounded-2xl bg-[#F1F5F9]/50 border-none shadow-inner font-bold text-lg focus-visible:ring-accent focus-visible:bg-white transition-all"
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-             <Select value={selectedExpertType} onValueChange={setSelectedExpertType}>
-               <SelectTrigger className="h-16 rounded-2xl bg-white border-2 border-primary/5 shadow-sm font-black text-[11px] uppercase tracking-widest px-6">
-                 <SelectValue placeholder="Uzman Türü" />
-               </SelectTrigger>
-               <SelectContent className="rounded-2xl border-none shadow-2xl">
-                 <SelectItem value="all" className="font-black text-[10px] uppercase">Tüm Uzmanlar</SelectItem>
-                 {expertTypes.map(t => <SelectItem key={t} value={t} className="font-bold text-[10px] uppercase">{t}</SelectItem>)}
-               </SelectContent>
-             </Select>
-
-             <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-               <SelectTrigger className="h-16 rounded-2xl bg-white border-2 border-primary/5 shadow-sm font-black text-[11px] uppercase tracking-widest px-6">
-                 <SelectValue placeholder="Branş Seç" />
-               </SelectTrigger>
-               <SelectContent className="rounded-2xl border-none shadow-2xl">
-                 <SelectItem value="all" className="font-black text-[10px] uppercase">Tüm Branşlar</SelectItem>
-                 {branches.map(b => <SelectItem key={b} value={b} className="font-bold text-[10px] uppercase">{b}</SelectItem>)}
-                 <SelectItem value="hidden" className="font-black text-[10px] uppercase text-accent">Branşını Gizleyenler</SelectItem>
-                 <SelectItem value="only_coaches" className="font-black text-[10px] uppercase text-accent">Sadece Koçlar</SelectItem>
-               </SelectContent>
-             </Select>
-
-             <Select value={selectedExam} onValueChange={setSelectedExam}>
-               <SelectTrigger className="h-16 rounded-2xl bg-white border-2 border-primary/5 shadow-sm font-black text-[11px] uppercase tracking-widest px-6">
-                 <SelectValue placeholder="Sınav Odaklı" />
-               </SelectTrigger>
-               <SelectContent className="rounded-2xl border-none shadow-2xl">
-                 <SelectItem value="all" className="font-black text-[10px] uppercase">Tüm Sınavlar</SelectItem>
-                 {exams.map(e => <SelectItem key={e} value={e} className="font-bold text-[10px] uppercase">{e}</SelectItem>)}
-               </SelectContent>
-             </Select>
-          </div>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {filteredTeachers.map((teacher, i) => {
-          const matchScore = calculateMatchScore(teacher);
-          const isRequested = sentRequests.includes(teacher.uid);
-          const isCodeRequested = sentCodeRequests.includes(teacher.uid);
-          
-          return (
-            <Card key={i} className="group relative overflow-hidden rounded-[3.5rem] border-none shadow-[0_30px_60px_-15px_rgba(15,23,42,0.08)] bg-white transition-all hover:-translate-y-4 hover:shadow-[0_60px_120px_-30px_rgba(15,23,42,0.15)] border border-primary/5">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-accent/10 transition-all duration-1000"></div>
-              
-              <div className="p-10 space-y-10">
-                <div className="flex justify-between items-start">
-                  <div className="relative">
-                    <div className="h-28 w-28 rounded-[2.75rem] bg-primary flex items-center justify-center text-white font-black text-4xl italic shadow-2xl relative border-[8px] border-white group-hover:rotate-3 transition-transform">
-                      {teacher.displayName?.charAt(0)}
-                    </div>
-                    {(teacher.badges?.includes('verified') || teacher.hideBranch) && (
-                      <div className="absolute -bottom-2 -right-2 h-11 w-11 bg-accent rounded-2xl flex items-center justify-center text-white shadow-xl border-4 border-white">
-                        <ShieldCheck className="h-6 w-6" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-3">
-                    <div className="flex gap-2">
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={() => handleSendCodeRequest(teacher.uid, teacher.displayName)}
-                        disabled={isCodeRequested}
-                        className={cn(
-                          "h-12 w-12 rounded-2xl border-2 transition-all shadow-sm group/code",
-                          isCodeRequested ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white border-primary/5 hover:border-accent hover:text-accent"
-                        )}
-                        title="Kod Almak İçin İstek Gönder"
-                      >
-                        {isCodeRequested ? <CheckCircle2 className="h-6 w-6" /> : <Key className="h-6 w-6 group-hover/code:rotate-12 transition-transform" />}
-                      </Button>
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-widest border border-emerald-100 shadow-sm">
-                      <Sparkles className="h-3.5 w-3.5" /> %{matchScore} AI Uyum
-                    </div>
-                    <div className="flex items-center justify-end gap-1.5 text-accent font-black">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span className="text-sm tracking-tighter">{teacher.rating || '5.0'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-                  <div className="space-y-1">
-                    <h4 className="text-3xl font-black text-primary tracking-tighter italic uppercase leading-none text-shadow-deep">{teacher.displayName}</h4>
-                    <p className="text-[11px] font-black text-accent uppercase tracking-[0.2em]">
-                      {teacher.hideBranch ? (teacher.coachType || "Eğitim Koçu") : `${teacher.branch} Uzmanı`}
-                    </p>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground font-medium leading-relaxed line-clamp-3 italic opacity-80">
-                    "{teacher.bio || "Öğrencilerin akademik ve motivasyonel hedeflerine ulaşması için profesyonel yol haritaları oluşturuyorum."}"
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="px-5 py-3 bg-[#F8FAFC] rounded-2xl border border-primary/5 flex items-center gap-3 group/stat hover:bg-primary transition-all">
-                      <GraduationCap className="h-5 w-5 text-primary group-hover/stat:text-white" />
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-black text-primary group-hover/stat:text-white leading-none">{teacher.experience || '8+'}</p>
-                        <p className="text-[8px] font-black uppercase opacity-40 group-hover/stat:text-white/60">Yıl Deneyim</p>
-                      </div>
-                    </div>
-                    <div className="px-5 py-3 bg-[#F8FAFC] rounded-2xl border border-primary/5 flex items-center gap-3 group/stat hover:bg-accent transition-all">
-                      <Users className="h-5 w-5 text-primary group-hover/stat:text-white" />
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-black text-primary group-hover/stat:text-white leading-none">{teacher.activeStudents || '14'}</p>
-                        <p className="text-[8px] font-black uppercase opacity-40 group-hover/stat:text-white/60">Aktif Öğrenci</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-primary/5 flex gap-4">
-                  <Button variant="outline" className="flex-1 h-16 rounded-2xl border-2 border-primary/5 font-black text-[11px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm" asChild>
-                    <Link href={`/dashboard/teacher/${teacher.uid}`}>Profili Gör</Link>
-                  </Button>
-                  <Button 
-                    onClick={() => handleSendRequest(teacher.uid, teacher.displayName)}
-                    disabled={isRequested}
-                    className={cn(
-                      "flex-1 h-16 rounded-2xl font-black text-[11px] uppercase tracking-widest gap-3 shadow-2xl transition-all hover:scale-105 active:scale-95",
-                      isRequested ? "bg-emerald-500 text-white cursor-default hover:scale-100" : "bg-primary hover:bg-accent text-white shadow-primary/20"
-                    )}
-                  >
-                    {isRequested ? (
-                      <>İstek İletildi <CheckCircle2 className="h-4 w-4" /></>
-                    ) : (
-                      <>İstek Gönder <ArrowRight className="h-4 w-4" /></>
-                    )}
-                  </Button>
-                </div>
-              </div>
+               </div>
             </Card>
-          );
-        })}
-      </div>
 
-      {filteredTeachers.length === 0 && (
-        <div className="py-40 text-center space-y-8 animate-in zoom-in-95 duration-500">
-          <div className="h-24 w-24 bg-primary/5 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner">
-            <Compass className="h-12 w-12 text-primary opacity-20" />
-          </div>
-          <p className="text-2xl font-black uppercase tracking-widest italic text-primary text-shadow-deep">Aradığınız kriterde uzman bulunamadı.</p>
-          <Button variant="link" onClick={() => {setSearch(''); setSelectedExpertType('all'); setSelectedBranch('all'); setSelectedExam('all');}} className="font-black text-accent uppercase tracking-widest text-xs">Filtreleri Temizle</Button>
-        </div>
-      )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               {filteredTeachers.map((t: any) => (
+                 <Card key={t.uid} className="premium-card p-10 group relative overflow-hidden hover:-translate-y-2 transition-all">
+                    <div className="space-y-8">
+                       <div className="flex justify-between items-start">
+                          <div className="h-20 w-20 rounded-[1.75rem] bg-slate-50 flex items-center justify-center text-primary font-black text-3xl italic shadow-inner border border-white">
+                             {t.displayName?.charAt(0)}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-accent font-black">
+                             <Star className="h-4 w-4 fill-current" /> 5.0
+                          </div>
+                       </div>
+                       <div>
+                          <h4 className="text-2xl font-black text-primary italic uppercase tracking-tighter leading-none mb-2">{t.displayName}</h4>
+                          <p className="text-[10px] font-black text-accent uppercase tracking-widest italic opacity-60">{t.branch || 'AKADEMİK KOÇ'}</p>
+                       </div>
+                       <Button onClick={() => handleSendRequest(t.uid, t.displayName)} className="w-full h-14 rounded-2xl bg-primary hover:bg-accent text-white font-black text-[9px] uppercase tracking-widest gap-3 shadow-xl transition-all active:scale-95 group/btn">
+                          MENTORLUK TALEBİ GÖNDER <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
+                       </Button>
+                    </div>
+                 </Card>
+               ))}
+            </div>
+         </div>
+      </div>
     </div>
   );
 }
