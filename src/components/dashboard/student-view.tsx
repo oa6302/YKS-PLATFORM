@@ -137,7 +137,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
               <h2 className="text-6xl md:text-8xl lg:text-[10rem] font-black italic leading-[0.8] tracking-tighter text-primary uppercase text-shadow-premium break-words">
                 BUGÜNKÜ<br />BLOKLARIN
               </h2>
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">VERBAL ENGINE v41.0</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">VERBAL ENGINE v42.0</p>
             </div>
             <Card className="bg-white rounded-[2.5rem] px-10 py-6 flex items-center gap-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-none shrink-0 w-full lg:w-auto relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
