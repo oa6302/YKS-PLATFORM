@@ -101,12 +101,15 @@ export default function PlanningPage() {
       if (day.date === dayDate) {
         return {
           ...day,
-          blocks: day.blocks.map((b: any) => {
-            if (b.id === blockId) {
-              if (action === 'done') return { ...b, status: b.status === 'done' ? 'planned' : 'done' };
-              if (action === 'delete') return null;
+          blocks: day.blocks.map((block: any) => {
+            if (block.id !== blockId) return block;
+            if (action === 'done') {
+              return {
+                ...block,
+                status: block.status === 'done' ? 'planned' : 'done',
+              };
             }
-            return b;
+            return null;
           }).filter(Boolean)
         };
       }
@@ -170,7 +173,7 @@ export default function PlanningPage() {
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-8 md:px-10 space-y-12">
+      <div className="mx-auto w-full max-w-[1700px] px-4 py-8 md:px-10 space-y-12">
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10">
           <div className="flex flex-col gap-6 flex-1 min-w-0">
             <div className="flex items-center gap-4">
@@ -178,7 +181,7 @@ export default function PlanningPage() {
                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
             </div>
             <div className="space-y-2">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v48.0</div>
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v48.5</div>
                <h2 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black tracking-tighter italic text-primary uppercase leading-[0.75] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
             </div>
           </div>
@@ -361,9 +364,9 @@ export default function PlanningPage() {
                                      onClick={() => handleTaskAction(block.id, day.date, 'delete')} 
                                      variant="ghost" 
                                      size="icon" 
-                                     className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all shadow-md"
+                                     className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-slate-100 text-slate-400 shadow-sm transition-all hover:bg-red-500 hover:text-white"
                                    >
-                                     <Trash2 className="h-5 w-5 sm:h-6 sm:w-6" />
+                                     <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                    </Button>
                                 </div>
                              </div>
@@ -385,7 +388,7 @@ export default function PlanningPage() {
                 <DialogTitle className="text-3xl sm:text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
                   GÖREV <span className="text-accent">DÜZENLE</span>
                 </DialogTitle>
-                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v48.0</DialogDescription>
+                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v48.5</DialogDescription>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-8 w-8 sm:h-10 sm:w-10 bg-slate-50"><X className="h-4 w-4 sm:h-5 w-5" /></Button>
            </DialogHeader>
@@ -444,20 +447,22 @@ export default function PlanningPage() {
                    </div>
                 </div>
 
-                <Button onClick={async () => {
-                  if (!db || !user || !studyPlan) return;
-                  const newPlan = studyPlan.masterPlan.map((day: any) => {
-                    if (day.date === editingBlock.date) {
-                      return { ...day, blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) };
-                    }
-                    return day;
-                  });
-                  await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
-                  setIsEditDialogOpen(false);
-                  toast({ title: 'Terminal Güncellendi', className: "bg-primary text-white rounded-2xl shadow-2xl" });
-                }} className="w-full h-16 sm:h-20 rounded-[2rem] sm:rounded-[2.5rem] bg-primary hover:bg-accent text-white font-black text-base sm:text-lg uppercase tracking-[0.3em] gap-3 sm:gap-4 shadow-2xl transition-all">
-                  KAYDET <Save className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-4 pt-4 sm:pt-6">
+                  <Button onClick={async () => {
+                    if (!db || !user || !studyPlan) return;
+                    const newPlan = studyPlan.masterPlan.map((day: any) => {
+                      if (day.date === editingBlock.date) {
+                        return { ...day, blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) };
+                      }
+                      return day;
+                    });
+                    await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
+                    setIsEditDialogOpen(false);
+                    toast({ title: 'Terminal Güncellendi', className: "bg-primary text-white rounded-2xl shadow-2xl" });
+                  }} className="flex-1 h-16 sm:h-20 rounded-[2rem] bg-primary hover:bg-accent text-white font-black text-base sm:text-lg uppercase tracking-[0.3em] gap-3 sm:gap-4 shadow-2xl transition-all">
+                    KAYDET <Save className="h-5 w-5 sm:h-6 sm:w-6 text-accent" />
+                  </Button>
+                </div>
              </div>
            )}
         </DialogContent>

@@ -1,6 +1,7 @@
 /**
  * @fileOverview YKS TM Sözel Odaklı Müfredat Verisi (TYT-AYT)
  * Geometri, Dil Bilgisi ve Sayısal dersler tamamen çıkarılmıştır.
+ * Sadece anlam ve yorumlama odaklıdır.
  */
 
 export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
@@ -15,9 +16,7 @@ export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
     'Paragraf Bölme ve Akışı Bozan Cümle', 
     'Paragraf Tamamlama (Boşluk Doldurma)', 
     'Düşünceyi Geliştirme Yolları (Tanımlama, Örneklendirme vb.)', 
-    'Anlatım Biçimleri (Açıklama, Tartışma vb.)',
-    'Yazım Kuralları',
-    'Noktalama İşaretleri'
+    'Anlatım Biçimleri (Açıklama, Tartışma vb.)'
   ],
   'TYT Tarih': [
     'Tarih ve Zaman', 'İlk Çağ Uygarlıkları', 'İslam Tarihi', 'Türk-İslam Devletleri', 
