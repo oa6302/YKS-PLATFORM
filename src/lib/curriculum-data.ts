@@ -6,17 +6,17 @@
 
 export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
   'TYT Türkçe': [
-    'Sözcükte Anlam (Gerçek-Mecaz-Yan Anlam)', 
-    'Söz Öbeklerinde Anlam (Deyimler-Atasözleri)',
-    'Cümlede Anlam (Yorum, Öznel-Nesnel)', 
-    'Cümlede Kavramlar (Tahmin, Varsayım, Eleştiri)',
+    'Sözcükte Anlam', 
+    'Söz Öbeklerinde Anlam',
+    'Cümlede Anlam', 
+    'Cümlede Kavramlar',
     'Paragrafta Ana Düşünce', 
     'Paragrafta Yardımcı Düşünceler', 
-    'Paragrafta Yapı (Giriş-Gelişme-Sonuç)', 
-    'Paragraf Bölme ve Akışı Bozan Cümle', 
-    'Paragraf Tamamlama (Boşluk Doldurma)', 
-    'Düşünceyi Geliştirme Yolları (Tanımlama, Örneklendirme vb.)', 
-    'Anlatım Biçimleri (Açıklama, Tartışma vb.)'
+    'Paragrafta Yapı', 
+    'Paragraf Bölme', 
+    'Paragraf Tamamlama', 
+    'Düşünceyi Geliştirme Yolları', 
+    'Anlatım Biçimleri'
   ],
   'TYT Tarih': [
     'Tarih ve Zaman', 'İlk Çağ Uygarlıkları', 'İslam Tarihi', 'Türk-İslam Devletleri', 
