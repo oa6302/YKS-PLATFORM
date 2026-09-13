@@ -4,7 +4,6 @@ import { useUser, useDoc, useFirestore } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
 import {
   LayoutDashboard,
   Calendar,
@@ -14,23 +13,18 @@ import {
   Link as LinkIcon,
   Award,
   Clock,
-  Brain,
   Menu,
   X,
   Loader2,
 } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
 import { useState, useEffect, Suspense } from 'react';
-
 import { StudentView } from '@/components/dashboard/student-view';
-
 import {
   doc,
   setDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-
 import {
   format,
   addDays,
@@ -38,7 +32,6 @@ import {
   parseISO,
   isBefore,
 } from 'date-fns';
-
 import { tr } from 'date-fns/locale';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
@@ -68,12 +61,6 @@ export interface StudyDay {
   blocks: StudyBlock[];
 }
 
-/**
- * Adaptif Plan Oluşturucu (v45 - Zero Loss Logic)
- * - Mevcut planı korur (Manuel editler ve Tamamlananlar silinmez).
- * - Tamamlanmış konuları atlar.
- * - Sözel branşlar arası dengeli dağılım yapar.
- */
 export const generateAdaptivePlan = (
   startDateStr: string,
   completedTopics: Record<string, string[]> = {},
@@ -113,7 +100,7 @@ export const generateAdaptivePlan = (
     const dayName = format(currentDate, 'EEEE', { locale: tr });
     const isAytStarted = !isBefore(currentDate, aytDate);
     
-    // MEVCUT GÜNÜ KORUMA MANTIĞI
+    // SIFIR VERİ KAYBI PROTOKOLÜ: Mevcut mühürlü günleri koru
     const existingDay = existingPlan.find(d => d.date === dateStr);
     if (existingDay && existingDay.blocks?.some(b => b.status === 'done' || b.isManuallyEdited)) {
       plan.push(existingDay);
@@ -209,7 +196,7 @@ function DashboardContent() {
           }, { merge: true });
         }
         if (!planLoading && !studyPlan && userData && userData.role === 'student') {
-          const adaptivePlan = generateAdaptivePlan(DEFAULT_PLAN_START, userData.completedTopics || []);
+          const adaptivePlan = generateAdaptivePlan(DEFAULT_PLAN_START, userData.completedTopics || {});
           await setDoc(doc(db, 'studyPlans', user.uid), {
             userId: user.uid,
             startDate: DEFAULT_PLAN_START,
@@ -268,7 +255,7 @@ function DashboardContent() {
         </ScrollArea>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
         {userData ? <StudentView user={user} userData={userData} /> : <div className="p-20 text-center"><Loader2 className="animate-spin h-10 w-10 mx-auto" /></div>}
       </main>
     </div>
