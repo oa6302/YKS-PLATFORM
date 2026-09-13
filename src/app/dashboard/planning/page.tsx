@@ -118,7 +118,7 @@ export default function PlanningPage() {
     });
     
     toast({ 
-      title: action === 'done' ? 'Plan Mühürlendi' : 'Görev Silindi', 
+      title: action === 'done' ? 'Terminal Mühürlendi' : 'Blok İmha Edildi', 
       className: "bg-primary text-white rounded-2xl shadow-2xl"
     });
   };
@@ -127,6 +127,7 @@ export default function PlanningPage() {
     if (!db || !user || !userData) return;
     setIsRegenerating(true);
     try {
+      // Seçilen startDate'i kullanarak bitmemiş konulara göre yeni plan üret
       const newPlan = generateAdaptivePlan(startDate, userData.completedTopics || {});
       await setDoc(doc(db, 'studyPlans', user.uid), {
         userId: user.uid,
@@ -183,7 +184,7 @@ export default function PlanningPage() {
              <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
           </div>
           <div className="space-y-2">
-             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> VERBAL ENGINE v42.0</div>
+             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> ADAPTIVE ENGINE v43.0</div>
              <h2 className="text-4xl md:text-6xl lg:text-[7.5rem] font-black tracking-tighter italic text-primary uppercase leading-[0.8] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
           </div>
         </div>
@@ -192,11 +193,11 @@ export default function PlanningPage() {
           <Card className="p-5 rounded-[2.5rem] border-none shadow-[0_40px_80px_-20px_rgba(15,23,42,0.12)] bg-white flex flex-wrap gap-4 items-end justify-center lg:justify-start relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
              <div className="space-y-1 relative z-10">
-                <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">MİLAT</Label>
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">MİLAT (BAŞLANGIÇ)</Label>
                 <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setViewMode('daily'); }} className="h-12 w-[150px] rounded-xl bg-slate-50 border-none font-bold text-xs px-4 shadow-inner" />
              </div>
              <div className="space-y-1 relative z-10">
-                <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">FİNAL</Label>
+                <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">FİNAL (SINAV)</Label>
                 <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setViewMode('daily'); }} className="h-12 w-[150px] rounded-xl bg-slate-50 border-none font-bold text-xs px-4 shadow-inner" />
              </div>
              <Button onClick={handleRegeneratePlan} disabled={isRegenerating} className="h-12 px-6 rounded-xl bg-primary hover:bg-accent text-white font-black text-[9px] uppercase tracking-[0.2em] gap-2 shadow-2xl transition-all relative z-10">

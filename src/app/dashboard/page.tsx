@@ -18,8 +18,6 @@ import {
   Menu,
   X,
   Loader2,
-  MessageSquare,
-  Compass
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -66,6 +64,12 @@ export interface StudyDay {
   blocks: StudyBlock[];
 }
 
+/**
+ * Adaptif Plan Oluşturucu
+ * - Seçilen tarihten başlar.
+ * - Tamamlanmış konuları atlar.
+ * - Her güne tam 4 blok sığdırır.
+ */
 export const generateAdaptivePlan = (
   startDateStr: string,
   completedTopics: Record<string, string[]> = {}
@@ -76,6 +80,9 @@ export const generateAdaptivePlan = (
   const daysInterval = differenceInDays(endDate, startDate);
 
   if (daysInterval < 0) return [];
+
+  // Tamamlanmış konuların düz listesi
+  const finishedSet = new Set(Object.values(completedTopics).flat());
 
   const lessonPointers: Record<string, number> = {};
   const plan: StudyDay[] = [];
@@ -90,11 +97,27 @@ export const generateAdaptivePlan = (
     const aytLessons = Object.keys(AYT_SOZEL_TOPICS);
     const dailyBlocks: StudyBlock[] = [];
 
+    // Helper: Bir dersten sıradaki bitmemiş konuyu bul
+    const getNextTopic = (lesson: string, pool: Record<string, string[]>) => {
+      const allTopics = pool[lesson] || [];
+      let pointer = lessonPointers[lesson] || 0;
+      let attempts = 0;
+
+      while (attempts < allTopics.length) {
+        const currentTopic = allTopics[pointer % allTopics.length];
+        if (!finishedSet.has(currentTopic)) {
+          lessonPointers[lesson] = pointer + 1;
+          return currentTopic;
+        }
+        pointer++;
+        attempts++;
+      }
+      return 'GENEL TEKRAR VE ANALİZ';
+    };
+
     // 1. KART - ANA KONU (10:00)
     const lesson1 = tytLessons[i % tytLessons.length];
-    const topics1 = TYT_SOZEL_TOPICS[lesson1];
-    const topic1 = topics1[(lessonPointers[lesson1] || 0) % topics1.length];
-    lessonPointers[lesson1] = (lessonPointers[lesson1] || 0) + 1;
+    const topic1 = getNextTopic(lesson1, TYT_SOZEL_TOPICS);
 
     dailyBlocks.push({
       id: `block_${dateStr}_1000`,
@@ -112,8 +135,7 @@ export const generateAdaptivePlan = (
     const pool2 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const lessons2 = Object.keys(pool2);
     const lesson2 = lessons2[(i + 1) % lessons2.length];
-    const topic2 = pool2[lesson2][(lessonPointers[lesson2] || 0) % pool2[lesson2].length];
-    lessonPointers[lesson2] = (lessonPointers[lesson2] || 0) + 1;
+    const topic2 = getNextTopic(lesson2, pool2);
 
     dailyBlocks.push({
       id: `block_${dateStr}_1100`,
@@ -132,7 +154,7 @@ export const generateAdaptivePlan = (
       id: `block_${dateStr}_1200`,
       time: '12:00',
       lesson: 'STRATEJİK TEKRAR',
-      topic: 'DÜNÜN TEKRARI',
+      topic: 'DÜNÜN KRİTİK KAZANIMLARI',
       status: 'waiting',
       examType: 'GENEL',
       cardType: 'daily_review',
@@ -145,7 +167,7 @@ export const generateAdaptivePlan = (
       id: `block_${dateStr}_1500`,
       time: '15:00',
       lesson: 'TYT TÜRKÇE',
-      topic: '20 ADET PARAGRAF',
+      topic: '20 ADET PARAGRAF KONDİSYONU',
       status: 'waiting',
       examType: 'TYT',
       cardType: 'paragraph',
@@ -216,7 +238,6 @@ function DashboardContent() {
     { id: 'links', label: 'Kaynaklar', icon: LinkIcon, path: '/dashboard/links' },
     { id: 'awards', label: 'Ödüller', icon: Award, path: '/dashboard/awards' },
     { id: 'pomodoro', label: 'Pomodoro', icon: Clock, path: '/dashboard/pomodoro' },
-    { id: 'ai-assistant', label: 'AI Asistan', icon: Brain, path: '/dashboard/ai-analysis' },
   ];
 
   return (
