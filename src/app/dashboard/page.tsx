@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useState, useEffect, Suspense } from 'react';
 
-import { StudentView } from '@/app/dashboard/student-view';
+import { StudentView } from '@/components/dashboard/student-view';
 
 import {
   doc,
@@ -54,8 +54,12 @@ export interface StudyBlock {
   time: string;
   examType: 'TYT' | 'AYT' | 'GENEL';
   cardType: 'main_topic' | 'secondary_topic' | 'daily_review' | 'paragraph';
-  studyResources: any[];
-  testResources: any[];
+  youtubeUrl?: string;
+  mebiUrl?: string;
+  ogmKonuUrl?: string;
+  ogmTestUrl?: string;
+  customLinkUrl?: string;
+  isManuallyEdited?: boolean;
 }
 
 export interface StudyDay {
@@ -65,14 +69,15 @@ export interface StudyDay {
 }
 
 /**
- * Adaptif Plan Oluşturucu
- * - Seçilen tarihten başlar.
+ * Adaptif Plan Oluşturucu (v45 - Zero Loss Logic)
+ * - Mevcut planı korur (Manuel editler ve Tamamlananlar silinmez).
  * - Tamamlanmış konuları atlar.
- * - Her güne tam 4 blok sığdırır.
+ * - Sözel branşlar arası dengeli dağılım yapar.
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
-  completedTopics: Record<string, string[]> = {}
+  completedTopics: Record<string, string[]> = {},
+  existingPlan: StudyDay[] = []
 ): StudyDay[] => {
   const startDate = parseISO(startDateStr);
   const aytDate = parseISO(AYT_START_DATE);
@@ -81,11 +86,26 @@ export const generateAdaptivePlan = (
 
   if (daysInterval < 0) return [];
 
-  // Tamamlanmış konuların düz listesi
   const finishedSet = new Set(Object.values(completedTopics).flat());
-
   const lessonPointers: Record<string, number> = {};
   const plan: StudyDay[] = [];
+
+  const getNextTopic = (lesson: string, pool: Record<string, string[]>) => {
+    const allTopics = pool[lesson] || [];
+    let pointer = lessonPointers[lesson] || 0;
+    let attempts = 0;
+
+    while (attempts < allTopics.length) {
+      const currentTopic = allTopics[pointer % allTopics.length];
+      if (!finishedSet.has(currentTopic)) {
+        lessonPointers[lesson] = pointer + 1;
+        return currentTopic;
+      }
+      pointer++;
+      attempts++;
+    }
+    return 'GENEL SÖZEL ANALİZ';
+  };
 
   for (let i = 0; i <= daysInterval; i++) {
     const currentDate = addDays(startDate, i);
@@ -93,63 +113,44 @@ export const generateAdaptivePlan = (
     const dayName = format(currentDate, 'EEEE', { locale: tr });
     const isAytStarted = !isBefore(currentDate, aytDate);
     
+    // MEVCUT GÜNÜ KORUMA MANTIĞI
+    const existingDay = existingPlan.find(d => d.date === dateStr);
+    if (existingDay && existingDay.blocks?.some(b => b.status === 'done' || b.isManuallyEdited)) {
+      plan.push(existingDay);
+      continue;
+    }
+
     const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const aytLessons = Object.keys(AYT_SOZEL_TOPICS);
     const dailyBlocks: StudyBlock[] = [];
 
-    // Helper: Bir dersten sıradaki bitmemiş konuyu bul
-    const getNextTopic = (lesson: string, pool: Record<string, string[]>) => {
-      const allTopics = pool[lesson] || [];
-      let pointer = lessonPointers[lesson] || 0;
-      let attempts = 0;
-
-      while (attempts < allTopics.length) {
-        const currentTopic = allTopics[pointer % allTopics.length];
-        if (!finishedSet.has(currentTopic)) {
-          lessonPointers[lesson] = pointer + 1;
-          return currentTopic;
-        }
-        pointer++;
-        attempts++;
-      }
-      return 'GENEL TEKRAR VE ANALİZ';
-    };
-
-    // 1. KART - ANA KONU (10:00)
+    // 1. ANA KONU (10:00)
     const lesson1 = tytLessons[i % tytLessons.length];
-    const topic1 = getNextTopic(lesson1, TYT_SOZEL_TOPICS);
-
     dailyBlocks.push({
       id: `block_${dateStr}_1000`,
       time: '10:00',
       lesson: lesson1,
-      topic: topic1,
+      topic: getNextTopic(lesson1, TYT_SOZEL_TOPICS),
       status: 'waiting',
       examType: 'TYT',
-      cardType: 'main_topic',
-      studyResources: [{ type: 'youtube', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(lesson1 + ' ' + topic1)}` }],
-      testResources: [{ type: 'eba', url: `https://www.eba.gov.tr/arama?q=${encodeURIComponent(topic1)}` }]
+      cardType: 'main_topic'
     });
 
-    // 2. KART - İKİNCİ KONU (11:00)
+    // 2. İKİNCİ KONU (11:00)
     const pool2 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const lessons2 = Object.keys(pool2);
     const lesson2 = lessons2[(i + 1) % lessons2.length];
-    const topic2 = getNextTopic(lesson2, pool2);
-
     dailyBlocks.push({
       id: `block_${dateStr}_1100`,
       time: '11:00',
       lesson: lesson2,
-      topic: topic2,
+      topic: getNextTopic(lesson2, pool2),
       status: 'waiting',
       examType: isAytStarted ? 'AYT' : 'TYT',
-      cardType: 'secondary_topic',
-      studyResources: [{ type: 'youtube', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(lesson2 + ' ' + topic2)}` }],
-      testResources: [{ type: 'ogm', url: `https://ogmmateryal.eba.gov.tr/arama?q=${encodeURIComponent(topic2)}` }]
+      cardType: 'secondary_topic'
     });
 
-    // 3. KART - DÜNÜN TEKRARI (12:00)
+    // 3. DÜNÜN TEKRARI (12:00)
     dailyBlocks.push({
       id: `block_${dateStr}_1200`,
       time: '12:00',
@@ -157,12 +158,10 @@ export const generateAdaptivePlan = (
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
       status: 'waiting',
       examType: 'GENEL',
-      cardType: 'daily_review',
-      studyResources: [],
-      testResources: []
+      cardType: 'daily_review'
     });
 
-    // 4. KART - 20 ADET PARAGRAF (15:00)
+    // 4. 20 ADET PARAGRAF (15:00)
     dailyBlocks.push({
       id: `block_${dateStr}_1500`,
       time: '15:00',
@@ -170,9 +169,7 @@ export const generateAdaptivePlan = (
       topic: '20 ADET PARAGRAF KONDİSYONU',
       status: 'waiting',
       examType: 'TYT',
-      cardType: 'paragraph',
-      studyResources: [{ type: 'youtube', url: 'https://www.youtube.com/results?search_query=paragraf+taktikleri' }],
-      testResources: [{ type: 'eba', url: 'https://www.eba.gov.tr/arama?q=paragraf+testi' }]
+      cardType: 'paragraph'
     });
 
     plan.push({ date: dateStr, day: dayName, blocks: dailyBlocks });
@@ -212,7 +209,7 @@ function DashboardContent() {
           }, { merge: true });
         }
         if (!planLoading && !studyPlan && userData && userData.role === 'student') {
-          const adaptivePlan = generateAdaptivePlan(DEFAULT_PLAN_START, userData.completedTopics || {});
+          const adaptivePlan = generateAdaptivePlan(DEFAULT_PLAN_START, userData.completedTopics || []);
           await setDoc(doc(db, 'studyPlans', user.uid), {
             userId: user.uid,
             startDate: DEFAULT_PLAN_START,

@@ -128,7 +128,11 @@ export default function PlanningPage() {
     if (!db || !user || !userData) return;
     setIsRegenerating(true);
     try {
-      const newPlan = generateAdaptivePlan(startDate, userData.completedTopics || {});
+      const newPlan = generateAdaptivePlan(
+        startDate, 
+        userData.completedTopics || {}, 
+        studyPlan?.masterPlan || []
+      );
       await setDoc(doc(db, 'studyPlans', user.uid), {
         userId: user.uid,
         startDate: startDate,
@@ -173,7 +177,7 @@ export default function PlanningPage() {
              <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
           </div>
           <div className="space-y-2">
-             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v44.0</div>
+             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v45.0</div>
              <h2 className="text-4xl md:text-6xl lg:text-[7.5rem] font-black tracking-tighter italic text-primary uppercase leading-[0.8] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
           </div>
         </div>
@@ -377,7 +381,7 @@ export default function PlanningPage() {
                 <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
                   GÖREV <span className="text-accent">DÜZENLE</span>
                 </DialogTitle>
-                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[9px]">Akademik Terminal v44.0</DialogDescription>
+                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[9px]">Akademik Terminal v45.0</DialogDescription>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-10 w-10 bg-slate-50"><X className="h-5 w-5" /></Button>
            </DialogHeader>
@@ -385,7 +389,7 @@ export default function PlanningPage() {
              <div className="space-y-8 max-h-[70vh] overflow-y-auto px-2 pr-6 scrollbar-hide">
                 <div className="space-y-3">
                   <Label className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic text-primary">KONU / GÖREV ADI</Label>
-                  <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value})} className="h-16 rounded-2xl bg-slate-50 border-none font-bold text-lg px-8 shadow-inner focus-visible:ring-accent" />
+                  <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value, isManuallyEdited: true})} className="h-16 rounded-2xl bg-slate-50 border-none font-bold text-lg px-8 shadow-inner focus-visible:ring-accent" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-8">
@@ -394,15 +398,15 @@ export default function PlanningPage() {
                       <div className="space-y-4">
                          <div className="relative group">
                             <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-500 opacity-40" />
-                            <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="YouTube URL" />
+                            <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="YouTube URL" />
                          </div>
                          <div className="relative group">
                             <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 opacity-40" />
-                            <Input value={editingBlock.mebiUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, mebiUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="MEBİ URL" />
+                            <Input value={editingBlock.mebiUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, mebiUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="MEBİ URL" />
                          </div>
                          <div className="relative group">
                             <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500 opacity-40" />
-                            <Input value={editingBlock.ogmKonuUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmKonuUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Konu URL" />
+                            <Input value={editingBlock.ogmKonuUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmKonuUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Konu URL" />
                          </div>
                       </div>
                    </div>
@@ -412,11 +416,11 @@ export default function PlanningPage() {
                       <div className="space-y-4">
                          <div className="relative group">
                             <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400 opacity-40" />
-                            <Input value={editingBlock.ogmTestUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmTestUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Test URL" />
+                            <Input value={editingBlock.ogmTestUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmTestUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Test URL" />
                          </div>
                          <div className="relative group">
                             <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary opacity-40" />
-                            <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="Özel Ders Linki URL" />
+                            <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="Özel Ders Linki URL" />
                          </div>
                       </div>
                    </div>
@@ -425,7 +429,7 @@ export default function PlanningPage() {
                 <div className="grid grid-cols-2 gap-6">
                    <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">SAAT</Label>
-                      <Input type="time" value={editingBlock.time || '10:00'} onChange={(e) => setEditingBlock({...editingBlock, time: e.target.value})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner px-6 font-black" />
+                      <Input type="time" value={editingBlock.time || '10:00'} onChange={(e) => setEditingBlock({...editingBlock, time: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner px-6 font-black" />
                    </div>
                    <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">DURUM MÜHÜRÜ</Label>
