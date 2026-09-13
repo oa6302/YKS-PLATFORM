@@ -125,7 +125,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
             <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black italic leading-[0.85] tracking-tighter text-primary uppercase text-shadow-premium break-words">
               BUGÜNKÜ<br />BLOKLARIN
             </h2>
-            <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">ACADEMIC ENGINE v46.0</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">ACADEMIC ENGINE v47.0</p>
           </div>
           <Card className="bg-white rounded-[2.5rem] px-10 py-6 flex items-center gap-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-none shrink-0 w-full lg:w-auto relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -157,7 +157,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                         <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                         <span className="text-[10px] sm:text-[12px] font-black">{block.time || '10:00'}</span>
                       </div>
-                      <span className="text-[8px] sm:text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#SÖZEL</span>
+                      <span className="text-[8px] sm:text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#{block.examType || 'SÖZEL'}</span>
                     </div>
                     <Badge 
                       onClick={() => handleTaskAction(block.id, 'done')}

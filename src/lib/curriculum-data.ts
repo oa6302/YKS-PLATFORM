@@ -1,6 +1,6 @@
 /**
- * @fileOverview Sadece Sözel Müfredat Verisi (TYT-AYT)
- * Matematik, Geometri, Fen Bilimleri ve Dil Bilgisi konuları tamamen çıkarılmıştır.
+ * @fileOverview YKS TM Sözel Odaklı Müfredat Verisi (TYT-AYT)
+ * Geometri, Dil Bilgisi ve Sayısal dersler tamamen çıkarılmıştır.
  */
 
 export const TYT_SOZEL_TOPICS: Record<string, string[]> = {

@@ -102,7 +102,7 @@ export const generateAdaptivePlan = (
     
     // SIFIR VERİ KAYBI PROTOKOLÜ: Mevcut mühürlü günleri koru
     const existingDay = existingPlan.find(d => d.date === dateStr);
-    if (existingDay && existingDay.blocks?.some(b => b.status === 'done' || b.isManuallyEdited)) {
+    if (existingDay && existingDay.blocks?.some(b => b.status === 'done' || b.isManuallyEdited || b.youtubeUrl || b.customLinkUrl)) {
       plan.push(existingDay);
       continue;
     }
@@ -112,28 +112,28 @@ export const generateAdaptivePlan = (
     const dailyBlocks: StudyBlock[] = [];
 
     // 1. ANA KONU (10:00)
-    const lesson1 = tytLessons[i % tytLessons.length];
+    const pool1 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
+    const lessons1 = Object.keys(pool1);
+    const lesson1 = lessons1[i % lessons1.length];
     dailyBlocks.push({
       id: `block_${dateStr}_1000`,
       time: '10:00',
       lesson: lesson1,
-      topic: getNextTopic(lesson1, TYT_SOZEL_TOPICS),
+      topic: getNextTopic(lesson1, pool1),
       status: 'waiting',
-      examType: 'TYT',
+      examType: isAytStarted ? 'AYT' : 'TYT',
       cardType: 'main_topic'
     });
 
     // 2. İKİNCİ KONU (11:00)
-    const pool2 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
-    const lessons2 = Object.keys(pool2);
-    const lesson2 = lessons2[(i + 1) % lessons2.length];
+    const lesson2 = tytLessons[(i + 1) % tytLessons.length];
     dailyBlocks.push({
       id: `block_${dateStr}_1100`,
       time: '11:00',
       lesson: lesson2,
-      topic: getNextTopic(lesson2, pool2),
+      topic: getNextTopic(lesson2, TYT_SOZEL_TOPICS),
       status: 'waiting',
-      examType: isAytStarted ? 'AYT' : 'TYT',
+      examType: 'TYT',
       cardType: 'secondary_topic'
     });
 
@@ -188,7 +188,7 @@ function DashboardContent() {
             uid: user.uid,
             displayName: 'Misafir Öğrenci',
             role: 'student',
-            targetExam: 'YKS_SOZEL',
+            targetExam: 'YKS_TM_SOZEL',
             points: 1250,
             completedTopics: {},
             createdAt: serverTimestamp(),

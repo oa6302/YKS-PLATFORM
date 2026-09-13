@@ -178,7 +178,7 @@ export default function PlanningPage() {
                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
             </div>
             <div className="space-y-2">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v46.0</div>
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v47.0</div>
                <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black tracking-tighter italic text-primary uppercase leading-[0.8] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
             </div>
           </div>
@@ -305,7 +305,7 @@ export default function PlanningPage() {
                                         <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
                                         <span className="text-[10px] sm:text-[12px] font-black">{block.time || '10:00'}</span>
                                       </div>
-                                      <span className="text-[8px] sm:text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#SÖZEL</span>
+                                      <span className="text-[8px] sm:text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#{block.examType || 'SÖZEL'}</span>
                                    </div>
                                    <Badge 
                                      onClick={() => handleTaskAction(block.id, day.date, 'done')}
@@ -385,9 +385,9 @@ export default function PlanningPage() {
                 <DialogTitle className="text-3xl sm:text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
                   GÖREV <span className="text-accent">DÜZENLE</span>
                 </DialogTitle>
-                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v46.0</DialogDescription>
+                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v47.0</DialogDescription>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-8 w-8 sm:h-10 sm:w-10 bg-slate-50"><X className="h-4 w-4 sm:h-5 sm:w-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-8 w-8 sm:h-10 sm:w-10 bg-slate-50"><X className="h-4 w-4 sm:h-5 w-5" /></Button>
            </DialogHeader>
            {editingBlock && (
              <div className="space-y-6 sm:space-y-8 max-h-[75vh] overflow-y-auto px-1 pr-4 scrollbar-hide">
