@@ -17,6 +17,7 @@ import {
   Trash2,
   CheckCircle2,
   Link as LinkIcon,
+  GraduationCap
 } from 'lucide-react';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -45,8 +46,11 @@ interface StudyBlock {
   status: 'planned' | 'done' | 'skipped' | 'waiting';
   time: string;
   examType?: string;
-  studyResources?: any[];
-  testResources?: any[];
+  youtubeUrl?: string;
+  mebiUrl?: string;
+  ogmKonuUrl?: string;
+  ogmTestUrl?: string;
+  customLinkUrl?: string;
 }
 
 interface StudyDay {
@@ -108,17 +112,6 @@ export function StudentView({ user, userData }: StudentViewProps) {
     }
   };
 
-  const getResourceIcon = (type: string) => {
-    switch (type) {
-      case 'youtube': return <Youtube className="h-4 w-4 text-red-500" />;
-      case 'lesson_link': return <LinkIcon className="h-4 w-4 text-primary" />;
-      case 'eba': return <BookOpen className="h-4 w-4 text-emerald-500" />;
-      case 'ogm': return <BookOpen className="h-4 w-4 text-blue-500" />;
-      case 'pdf': return <FileText className="h-4 w-4 text-orange-500" />;
-      default: return <LinkIcon className="h-4 w-4 text-primary" />;
-    }
-  };
-
   if (planLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5 p-10">
@@ -137,7 +130,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
               <h2 className="text-6xl md:text-8xl lg:text-[10rem] font-black italic leading-[0.8] tracking-tighter text-primary uppercase text-shadow-premium break-words">
                 BUGÜNKÜ<br />BLOKLARIN
               </h2>
-              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">VERBAL ENGINE v42.0</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">ACADEMIC ENGINE v44.0</p>
             </div>
             <Card className="bg-white rounded-[2.5rem] px-10 py-6 flex items-center gap-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-none shrink-0 w-full lg:w-auto relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -170,7 +163,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                         <Clock className="h-4 w-4 text-accent" />
                         <span className="text-[12px] font-black">{block.time || '10:00'}</span>
                       </div>
-                      <span className="text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#{block.examType || (String(block.lesson).includes('AYT') ? 'AYT' : 'TYT')}</span>
+                      <span className="text-[10px] font-black text-primary/15 uppercase tracking-[0.3em] italic">#SÖZEL</span>
                     </div>
                     <Badge 
                       onClick={() => handleTaskAction(block.id, 'done')}
@@ -194,11 +187,9 @@ export function StudentView({ user, userData }: StudentViewProps) {
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-primary/30 uppercase tracking-[0.4em] italic">KONU ÇALIŞMA</span>
                         <div className="flex gap-4 items-center">
-                          {block.studyResources?.map((res: any, idx: number) => (
-                            <a key={idx} href={res.url} target="_blank" className="hover:scale-125 transition-all opacity-60 hover:opacity-100">
-                              {getResourceIcon(res.type)}
-                            </a>
-                          ))}
+                           {block.youtubeUrl && <a href={block.youtubeUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><Youtube className="h-4 w-4 text-rose-500" /></a>}
+                           {block.mebiUrl && <a href={block.mebiUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><GraduationCap className="h-4 w-4 text-emerald-500" /></a>}
+                           {block.ogmKonuUrl && <a href={block.ogmKonuUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><BookOpen className="h-4 w-4 text-blue-500" /></a>}
                         </div>
                       </div>
                     </div>
@@ -210,11 +201,8 @@ export function StudentView({ user, userData }: StudentViewProps) {
                           <span className="text-[10px] font-black text-accent uppercase tracking-[0.4em] italic">TEST ÇÖZME</span>
                         </div>
                         <div className="flex gap-4 items-center">
-                          {block.testResources?.map((res: any, idx: number) => (
-                            <a key={idx} href={res.url} target="_blank" className="hover:scale-125 transition-all opacity-80">
-                              {getResourceIcon(res.type)}
-                            </a>
-                          ))}
+                           {block.ogmTestUrl && <a href={block.ogmTestUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><FileText className="h-4 w-4 text-blue-400" /></a>}
+                           {block.customLinkUrl && <a href={block.customLinkUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><LinkIcon className="h-4 w-4 text-primary" /></a>}
                         </div>
                       </div>
                     </div>

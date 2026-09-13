@@ -10,7 +10,7 @@ import {
   Calendar, Zap, Loader2, Sparkles, 
   ArrowLeft, Home, Edit3, Youtube, Save, FileText, 
   BookOpen, X, Clock, Target, Brain,
-  CheckCircle2, AlertCircle, Trash2, Link as LinkIcon
+  CheckCircle2, AlertCircle, Trash2, Link as LinkIcon, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { doc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -23,6 +23,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -127,7 +128,6 @@ export default function PlanningPage() {
     if (!db || !user || !userData) return;
     setIsRegenerating(true);
     try {
-      // Seçilen startDate'i kullanarak bitmemiş konulara göre yeni plan üret
       const newPlan = generateAdaptivePlan(startDate, userData.completedTopics || {});
       await setDoc(doc(db, 'studyPlans', user.uid), {
         userId: user.uid,
@@ -164,17 +164,6 @@ export default function PlanningPage() {
     }
   };
 
-  const getResourceIcon = (type: string) => {
-    switch (type) {
-      case 'youtube': return <Youtube className="h-4 w-4 text-red-500" />;
-      case 'lesson_link': return <LinkIcon className="h-4 w-4 text-primary" />;
-      case 'eba': return <BookOpen className="h-4 w-4 text-emerald-500" />;
-      case 'ogm': return <BookOpen className="h-4 w-4 text-blue-500" />;
-      case 'pdf': return <FileText className="h-4 w-4 text-orange-500" />;
-      default: return <LinkIcon className="h-4 w-4 text-primary" />;
-    }
-  };
-
   return (
     <div className="p-4 md:p-8 space-y-10 max-w-[1600px] mx-auto w-full animate-in fade-in duration-1000 bg-[#F8FAFC]">
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10">
@@ -184,7 +173,7 @@ export default function PlanningPage() {
              <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
           </div>
           <div className="space-y-2">
-             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> ADAPTIVE ENGINE v43.0</div>
+             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v44.0</div>
              <h2 className="text-4xl md:text-6xl lg:text-[7.5rem] font-black tracking-tighter italic text-primary uppercase leading-[0.8] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
           </div>
         </div>
@@ -334,11 +323,9 @@ export default function PlanningPage() {
                                  <div className="flex items-center justify-between">
                                    <span className="text-[9px] font-black text-primary/30 uppercase tracking-[0.2em] italic">KONU ÇALIŞMA</span>
                                    <div className="flex gap-3 items-center">
-                                     {block.studyResources?.map((res: any, idx: number) => (
-                                       <a key={idx} href={res.url} target="_blank" className="hover:scale-125 transition-all opacity-60">
-                                         {getResourceIcon(res.type)}
-                                       </a>
-                                     ))}
+                                     {block.youtubeUrl && <a href={block.youtubeUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><Youtube className="h-4 w-4 text-rose-500" /></a>}
+                                     {block.mebiUrl && <a href={block.mebiUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><GraduationCap className="h-4 w-4 text-emerald-500" /></a>}
+                                     {block.ogmKonuUrl && <a href={block.ogmKonuUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><BookOpen className="h-4 w-4 text-blue-500" /></a>}
                                    </div>
                                  </div>
 
@@ -350,11 +337,8 @@ export default function PlanningPage() {
                                      <span className="text-[9px] font-black text-accent uppercase tracking-[0.2em] italic">TEST ÇÖZME</span>
                                    </div>
                                    <div className="flex gap-3 items-center">
-                                     {block.testResources?.map((res: any, idx: number) => (
-                                       <a key={idx} href={res.url} target="_blank" className="hover:scale-125 transition-all opacity-60">
-                                         {getResourceIcon(res.type)}
-                                       </a>
-                                     ))}
+                                     {block.ogmTestUrl && <a href={block.ogmTestUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><FileText className="h-4 w-4 text-blue-400" /></a>}
+                                     {block.customLinkUrl && <a href={block.customLinkUrl} target="_blank" className="hover:scale-125 transition-all opacity-60"><LinkIcon className="h-4 w-4 text-primary" /></a>}
                                    </div>
                                  </div>
                               </div>
@@ -387,36 +371,71 @@ export default function PlanningPage() {
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="rounded-[4rem] border-none shadow-2xl p-10 bg-white max-w-lg overflow-hidden">
+        <DialogContent className="rounded-[4rem] border-none shadow-2xl p-10 bg-white max-w-2xl overflow-hidden">
            <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-6 mb-6">
-              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
-                GÖREV <span className="text-accent">DÜZENLE</span>
-              </DialogTitle>
+              <div className="space-y-2">
+                <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
+                  GÖREV <span className="text-accent">DÜZENLE</span>
+                </DialogTitle>
+                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[9px]">Akademik Terminal v44.0</DialogDescription>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-10 w-10 bg-slate-50"><X className="h-5 w-5" /></Button>
            </DialogHeader>
            {editingBlock && (
-             <div className="space-y-8">
+             <div className="space-y-8 max-h-[70vh] overflow-y-auto px-2 pr-6 scrollbar-hide">
                 <div className="space-y-3">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic">KONU / GÖREV ADI</Label>
+                  <Label className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic text-primary">KONU / GÖREV ADI</Label>
                   <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value})} className="h-16 rounded-2xl bg-slate-50 border-none font-bold text-lg px-8 shadow-inner focus-visible:ring-accent" />
                 </div>
+                
+                <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic">KONU ÇALIŞMA KAYNAKLARI</Label>
+                      <div className="space-y-4">
+                         <div className="relative group">
+                            <Youtube className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-500 opacity-40" />
+                            <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="YouTube URL" />
+                         </div>
+                         <div className="relative group">
+                            <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 opacity-40" />
+                            <Input value={editingBlock.mebiUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, mebiUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="MEBİ URL" />
+                         </div>
+                         <div className="relative group">
+                            <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500 opacity-40" />
+                            <Input value={editingBlock.ogmKonuUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmKonuUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Konu URL" />
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic text-accent">TEST ÇÖZME KAYNAKLARI</Label>
+                      <div className="space-y-4">
+                         <div className="relative group">
+                            <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400 opacity-40" />
+                            <Input value={editingBlock.ogmTestUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, ogmTestUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="OGM Test URL" />
+                         </div>
+                         <div className="relative group">
+                            <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary opacity-40" />
+                            <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-none pl-12 text-xs font-bold" placeholder="Özel Ders Linki URL" />
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-6">
                    <div className="space-y-3">
                       <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">SAAT</Label>
                       <Input type="time" value={editingBlock.time || '10:00'} onChange={(e) => setEditingBlock({...editingBlock, time: e.target.value})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner px-6 font-black" />
                    </div>
                    <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">XP KAZANIMI</Label>
-                      <Input type="number" value={editingBlock.xp || 50} onChange={(e) => setEditingBlock({...editingBlock, xp: parseInt(e.target.value)})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner px-6 font-black" />
+                      <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">DURUM MÜHÜRÜ</Label>
+                      <div className="flex gap-2">
+                        <button onClick={() => setEditingBlock({...editingBlock, status: 'planned'})} className={cn("flex-1 h-12 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all border-2", editingBlock.status === 'planned' ? "bg-primary text-white border-primary shadow-lg" : "bg-white border-slate-100 text-primary/40")}>BEK</button>
+                        <button onClick={() => setEditingBlock({...editingBlock, status: 'done'})} className={cn("flex-1 h-12 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all border-2", (editingBlock.status === 'done' || editingBlock.status === 'completed') ? "bg-emerald-500 text-white border-emerald-500 shadow-lg" : "bg-white border-slate-100 text-primary/40")}>OK</button>
+                      </div>
                    </div>
                 </div>
-                <div className="space-y-3">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic">DURUM MÜHÜRÜ</Label>
-                  <div className="flex gap-4">
-                    <button onClick={() => setEditingBlock({...editingBlock, status: 'planned'})} className={cn("flex-1 h-14 rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all border-2", editingBlock.status === 'planned' ? "bg-primary text-white border-primary shadow-xl" : "bg-white border-slate-100 text-primary/40 hover:border-primary/20")}>BEKLEMEDE</button>
-                    <button onClick={() => setEditingBlock({...editingBlock, status: 'done'})} className={cn("flex-1 h-14 rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all border-2", (editingBlock.status === 'done' || editingBlock.status === 'completed') ? "bg-emerald-500 text-white border-emerald-500 shadow-xl" : "bg-white border-slate-100 text-primary/40 hover:border-emerald-200")}>TAMAMLANDI</button>
-                  </div>
-                </div>
+
                 <Button onClick={async () => {
                   if (!db || !user || !studyPlan) return;
                   const newPlan = studyPlan.masterPlan.map((day: any) => {
