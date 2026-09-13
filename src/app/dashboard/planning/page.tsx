@@ -178,8 +178,8 @@ export default function PlanningPage() {
                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
             </div>
             <div className="space-y-2">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v47.0</div>
-               <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black tracking-tighter italic text-primary uppercase leading-[0.8] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
+               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3 w-3" /> COMMAND CENTER v48.0</div>
+               <h2 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black tracking-tighter italic text-primary uppercase leading-[0.75] text-shadow-premium break-words max-w-full">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
             </div>
           </div>
 
@@ -233,7 +233,7 @@ export default function PlanningPage() {
                    </div>
                    <div>
                       <p className="text-[7px] sm:text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-0.5 italic">{item.label}</p>
-                      <p className="text-2xl sm:text-4xl font-black text-primary italic tracking-tighter">{item.val}</p>
+                      <p className="text-4xl sm:text-5xl font-black text-primary italic tracking-tighter">{item.val}</p>
                       <p className="text-[6px] font-bold text-muted-foreground/30 uppercase mt-0.5 tracking-widest">{item.sub}</p>
                    </div>
                 </div>
@@ -319,7 +319,7 @@ export default function PlanningPage() {
                                 </div>
 
                                 <div className="flex-1 flex items-center justify-center py-4 sm:py-6 overflow-hidden px-1">
-                                  <h4 className={cn("text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black italic leading-[1.05] tracking-tighter uppercase text-primary text-shadow-premium text-center break-words line-clamp-3", isDone && "text-primary/50 line-through decoration-2")}>
+                                  <h4 className={cn("text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black italic leading-[1.05] tracking-tighter uppercase text-primary text-shadow-premium text-center break-words line-clamp-3", isDone && "text-primary/50 line-through decoration-2")}>
                                     {block.topic}
                                   </h4>
                                 </div>
@@ -385,7 +385,7 @@ export default function PlanningPage() {
                 <DialogTitle className="text-3xl sm:text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
                   GÖREV <span className="text-accent">DÜZENLE</span>
                 </DialogTitle>
-                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v47.0</DialogDescription>
+                <DialogDescription className="font-medium italic opacity-40 uppercase tracking-widest text-[8px] sm:text-[9px]">Akademik Terminal v48.0</DialogDescription>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-8 w-8 sm:h-10 sm:w-10 bg-slate-50"><X className="h-4 w-4 sm:h-5 w-5" /></Button>
            </DialogHeader>

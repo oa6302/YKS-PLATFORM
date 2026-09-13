@@ -122,10 +122,10 @@ export function StudentView({ user, userData }: StudentViewProps) {
       <div className="mx-auto w-full max-w-[1700px] px-4 py-8 md:px-10 space-y-12">
         <header className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
-            <h2 className="text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-black italic leading-[0.85] tracking-tighter text-primary uppercase text-shadow-premium break-words">
-              BUGÜNKÜ<br />BLOKLARIN
+            <h2 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black italic leading-[0.75] tracking-tighter text-primary uppercase text-shadow-premium break-words">
+              BUGÜNKÜ<br /><span className="text-primary/90">BLOKLARIN</span>
             </h2>
-            <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">ACADEMIC ENGINE v47.0</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/20 italic ml-2">ACADEMIC ENGINE v48.0</p>
           </div>
           <Card className="bg-white rounded-[2.5rem] px-10 py-6 flex items-center gap-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.08)] border-none shrink-0 w-full lg:w-auto relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
@@ -171,7 +171,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                   </div>
 
                   <div className="flex-1 flex items-center justify-center py-4 sm:py-6 overflow-hidden px-1">
-                    <h4 className={cn("text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black italic leading-[1.05] tracking-tighter uppercase text-primary text-shadow-premium text-center break-words line-clamp-3", isDone && "text-primary/50 line-through decoration-2")}>
+                    <h4 className={cn("text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black italic leading-[1.05] tracking-tighter uppercase text-primary text-shadow-premium text-center break-words line-clamp-3", isDone && "text-primary/50 line-through decoration-2")}>
                       {block.topic}
                     </h4>
                   </div>
