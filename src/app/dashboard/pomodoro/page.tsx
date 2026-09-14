@@ -86,15 +86,14 @@ export default function PomodoroPage() {
     setSeconds(0);
   }, [mode, workMins, breakMins]);
 
+  // Sonsuz döngüleri önlemek için bağımlılıklar rafine edildi
   useEffect(() => {
     if (!isActive) {
       const targetMins = mode === 'work' ? workMins : breakMins;
-      if (minutes !== targetMins || seconds !== 0) {
-        setMinutes(targetMins);
-        setSeconds(0);
-      }
+      setMinutes(targetMins);
+      setSeconds(0);
     }
-  }, [workMins, breakMins, mode, isActive, minutes, seconds]);
+  }, [workMins, breakMins, mode, isActive]);
 
   useEffect(() => {
     let interval: any = null;
@@ -190,7 +189,7 @@ export default function PomodoroPage() {
           </div>
           <div className="space-y-0.5">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-[0.3em] shadow-lg shadow-accent/20 italic border border-accent/20">
-                <Clock className="h-3 w-3" /> ODAKLANMA MOTORU V67.0
+                <Clock className="h-3 w-3" /> ODAKLANMA MOTORU V68.0
              </div>
              <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic text-primary uppercase leading-tight text-shadow-premium">
                 POMODORO <br /><span className="text-accent text-shadow-accent">TERMİNALİ</span>
