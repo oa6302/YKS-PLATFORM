@@ -35,7 +35,7 @@ import {
 import { tr } from 'date-fns/locale';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
-const DEFAULT_PLAN_START = '2026-09-01';
+const DEFAULT_PLAN_START = '2026-09-14';
 const AYT_START_DATE = '2026-12-01';
 const FINAL_EXAM_DATE = '2027-06-15';
 
@@ -91,7 +91,7 @@ export const generateAdaptivePlan = (
       pointer++;
       attempts++;
     }
-    return 'GENEL SÖZEL ANALİZ';
+    return 'GENEL ANALİZ';
   };
 
   for (let i = 0; i <= daysInterval; i++) {
@@ -100,7 +100,6 @@ export const generateAdaptivePlan = (
     const dayName = format(currentDate, 'EEEE', { locale: tr });
     const isAytStarted = !isBefore(currentDate, aytDate);
     
-    // SIFIR VERİ KAYBI PROTOKOLÜ: Mevcut mühürlü günleri koru
     const existingDay = existingPlan.find(d => d.date === dateStr);
     if (existingDay && existingDay.blocks?.some(b => b.status === 'done' || b.isManuallyEdited || b.youtubeUrl || b.customLinkUrl)) {
       plan.push(existingDay);
@@ -108,10 +107,8 @@ export const generateAdaptivePlan = (
     }
 
     const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
-    const aytLessons = Object.keys(AYT_SOZEL_TOPICS);
     const dailyBlocks: StudyBlock[] = [];
 
-    // 1. ANA KONU (10:00)
     const pool1 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const lessons1 = Object.keys(pool1);
     const lesson1 = lessons1[i % lessons1.length];
@@ -125,7 +122,6 @@ export const generateAdaptivePlan = (
       cardType: 'main_topic'
     });
 
-    // 2. İKİNCİ KONU (11:00)
     const lesson2 = tytLessons[(i + 1) % tytLessons.length];
     dailyBlocks.push({
       id: `block_${dateStr}_1100`,
@@ -137,7 +133,6 @@ export const generateAdaptivePlan = (
       cardType: 'secondary_topic'
     });
 
-    // 3. DÜNÜN TEKRARI (12:00)
     dailyBlocks.push({
       id: `block_${dateStr}_1200`,
       time: '12:00',
@@ -148,7 +143,6 @@ export const generateAdaptivePlan = (
       cardType: 'daily_review'
     });
 
-    // 4. 20 ADET PARAGRAF (15:00)
     dailyBlocks.push({
       id: `block_${dateStr}_1500`,
       time: '15:00',
@@ -188,7 +182,7 @@ function DashboardContent() {
             uid: user.uid,
             displayName: 'Misafir Öğrenci',
             role: 'student',
-            targetExam: 'YKS_TM_SOZEL',
+            targetExam: 'YKS_SOZEL_2027',
             points: 1250,
             completedTopics: {},
             createdAt: serverTimestamp(),
