@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { doc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { format, parseISO, isBefore, isSameMonth, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isAfter, addDays, differenceInDays } from 'date-fns';
+import { format, parseISO, isBefore, isAfter, addDays, differenceInDays } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import {
   Dialog,
@@ -27,14 +27,40 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
+
+// --- TM SÖZEL MÜFREDAT VERİSİ (DİL BİLGİSİ VE GEOMETRİ HARİÇ) ---
+const TM_SOZEL_CURRICULUM = {
+  TYT_MATEMATIK: [
+    'Temel Kavramlar', 'Sayı Basamakları', 'Bölme ve Bölünebilme', 'EBOB-EKOK', 
+    'Rasyonel Sayılar', 'Basit Eşitsizlikler', 'Mutlak Değer', 'Üslü Sayılar', 
+    'Köklü Sayılar', 'Çarpanlara Ayırma', 'Oran-Orantı', 'Denklem Çözme', 
+    'Sayı Problemleri', 'Kesir Problemleri', 'Yaş Problemleri', 'İşçi Problemleri', 
+    'Hız ve Hareket Problemleri', 'Yüzde, Kar ve Zarar Problemleri', 'Karışım Problemleri', 
+    'Grafik Problemleri', 'Kümeler', 'Fonksiyonlar', 'Permütasyon - Kombinasyon', 
+    'Olasılık', 'Veri ve İstatistik'
+  ],
+  TYT_TURKCE_ANLAM: [
+    'Sözcükte Anlam', 'Söz Öbeklerinde Anlam', 'Cümlede Anlam', 'Cümlede Kavramlar',
+    'Paragrafta Ana Düşünce', 'Paragrafta Yardımcı Düşünceler', 'Paragrafta Yapı', 
+    'Paragraf Bölme', 'Paragraf Tamamlama', 'Düşünceyi Geliştirme Yolları', 'Anlatım Biçimleri', 'Sözel Mantık'
+  ],
+  SOSYAL: [
+    'Tarih ve Zaman', 'İlk Çağ Uygarlıkları', 'İslam Tarihi', 'Türk-İslam Devletleri', 
+    'Osmanlı Kuruluş ve Yükselme', 'Doğa ve İnsan', 'Dünya\'nın Şekli ve Hareketleri', 
+    'Harita Bilgisi', 'Felsefe ile Tanışma', 'Bilgi Felsefesi', 'Bilgi ve İnanç'
+  ],
+  AYT_SOZEL: [
+    'Edebiyat: Söz Sanatları', 'Edebiyat: Şiir Bilgisi', 'Edebiyat: İslamiyet Öncesi', 
+    'Edebiyat: Halk Edebiyatı', 'Edebiyat: Divan Edebiyatı', 'Edebiyat: Tanzimat', 
+    'AYT Tarih: Tarih Bilimi', 'AYT Tarih: Uygarlığın Doğuşu', 'AYT Coğrafya: Ekosistemler',
+    'Felsefe Grubu: Psikolojiye Giriş', 'Felsefe Grubu: Sosyolojinin Alanı'
+  ]
+};
 
 // --- ADAPTIVE GENERATION ENGINE WITH ZERO-LOSS PROTECTION ---
 const generateAdaptivePlan = (
   startDateStr: string,
   endDateStr: string,
-  completedTopics: Record<string, string[]> = {},
   existingPlan: any[] = []
 ) => {
   const startDate = parseISO(startDateStr);
@@ -42,79 +68,64 @@ const generateAdaptivePlan = (
   const endDate = parseISO(endDateStr);
   const daysInterval = differenceInDays(endDate, startDate);
 
-  if (daysInterval < 0) return [];
+  if (daysInterval < 0) return existingPlan;
 
-  const finishedSet = new Set(Object.values(completedTopics).flat());
-  const lessonPointers: Record<string, number> = {};
   const plan: any[] = [];
+  const totalDays = daysInterval + 1;
 
-  const getNextTopic = (lesson: string, pool: Record<string, string[]>) => {
-    const allTopics = pool[lesson] || [];
-    let pointer = lessonPointers[lesson] || 0;
-    let attempts = 0;
-
-    while (attempts < allTopics.length) {
-      const currentTopic = allTopics[pointer % allTopics.length];
-      if (!finishedSet.has(currentTopic)) {
-        lessonPointers[lesson] = pointer + 1;
-        return currentTopic;
-      }
-      pointer++;
-      attempts++;
-    }
-    return 'GENEL TEKRAR';
-  };
-
-  for (let i = 0; i <= daysInterval; i++) {
+  for (let i = 0; i < totalDays; i++) {
     const currentDate = addDays(startDate, i);
     const dateStr = format(currentDate, 'yyyy-MM-dd');
     const dayName = format(currentDate, 'EEEE', { locale: tr });
     const isAytStarted = !isBefore(currentDate, aytDate);
     
+    // Check if we already have this day in existing plan
     const existingDay = existingPlan.find(d => d.date === dateStr);
     const dailyBlocks = [];
 
-    const getProtectedBlock = (time: string, defaultData: any) => {
+    // HELPER: Get protected block or generate new one
+    const getBlock = (time: string, type: string, pool: string[]) => {
       const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      // LOCK CONDITION: If done or has custom links or was manually edited, PRESERVE IT.
-      if (existing && (existing.status === 'done' || existing.isManuallyEdited || existing.youtubeUrl || existing.customLinkUrl || existing.mebiUrl || existing.ogmKonuUrl || existing.ogmTestUrl)) {
+      
+      // ZERO-LOSS RULE: If block is done, edited, or has links, KEEP IT
+      if (existing && (
+        existing.status === 'done' || 
+        existing.isManuallyEdited || 
+        existing.youtubeUrl || 
+        existing.mebiUrl || 
+        existing.ogmKonuUrl || 
+        existing.ogmTestUrl || 
+        existing.customLinkUrl
+      )) {
         return existing;
       }
-      return { id: `block_${dateStr}_${time.replace(':', '')}`, time, ...defaultData };
+
+      // Otherwise, generate new content from pool
+      const topicIndex = i % pool.length;
+      return {
+        id: `block_${dateStr}_${time.replace(':', '')}`,
+        time,
+        lesson: type,
+        topic: pool[topicIndex],
+        status: 'waiting',
+        examType: type.includes('AYT') ? 'AYT' : 'TYT',
+        isManuallyEdited: false
+      };
     };
 
-    const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
-    const p1Lessons = Object.keys(p1Pool);
-    const p1L = p1Lessons[i % p1Lessons.length];
-    dailyBlocks.push(getProtectedBlock('10:00', {
-      lesson: p1L,
-      topic: getNextTopic(p1L, p1Pool),
-      status: 'waiting',
-      examType: isAytStarted ? 'AYT' : 'TYT'
-    }));
+    // 10:00 - Main Topic (Math or AYT)
+    const p1Pool = isAytStarted ? TM_SOZEL_CURRICULUM.AYT_SOZEL : TM_SOZEL_CURRICULUM.TYT_MATEMATIK;
+    dailyBlocks.push(getBlock('10:00', isAytStarted ? 'AYT SÖZEL' : 'TYT MATEMATİK', p1Pool));
 
-    const p2Lessons = Object.keys(TYT_SOZEL_TOPICS);
-    const p2L = p2Lessons[(i + 2) % p2Lessons.length];
-    dailyBlocks.push(getProtectedBlock('11:00', {
-      lesson: p2L,
-      topic: getNextTopic(p2L, TYT_SOZEL_TOPICS),
-      status: 'waiting',
-      examType: 'TYT'
-    }));
+    // 11:00 - Secondary Topic (Social or Turkish)
+    const p2Pool = i % 2 === 0 ? TM_SOZEL_CURRICULUM.SOSYAL : TM_SOZEL_CURRICULUM.TYT_TURKCE_ANLAM;
+    dailyBlocks.push(getBlock('11:00', i % 2 === 0 ? 'SOSYAL' : 'TYT TÜRKÇE', p2Pool));
 
-    dailyBlocks.push(getProtectedBlock('12:00', {
-      lesson: 'STRATEJİK TEKRAR',
-      topic: 'DÜNÜN KRİTİK KAZANIMLARI',
-      status: 'waiting',
-      examType: 'GENEL'
-    }));
+    // 12:00 - Review
+    dailyBlocks.push(getBlock('12:00', 'TEKRAR', ['Dünün Kritik Kazanımları']));
 
-    dailyBlocks.push(getProtectedBlock('15:00', {
-      lesson: 'TYT TÜRKÇE',
-      topic: '20 ADET PARAGRAF KONDİSYONU',
-      status: 'waiting',
-      examType: 'TYT'
-    }));
+    // 15:00 - Paragraf
+    dailyBlocks.push(getBlock('15:00', 'KONDİSYON', ['20 Adet Paragraf Sorusu']));
 
     plan.push({ date: dateStr, day: dayName, blocks: dailyBlocks });
   }
@@ -131,8 +142,6 @@ export default function PlanningPage() {
   const { data: userData } = useDoc<any>(user?.uid ? `users/${user.uid}` : null);
   const { data: studyPlan } = useDoc<any>(user?.uid ? `studyPlans/${user.uid}` : null);
   
-  const [viewMode, setViewMode] = useState<string>('monthly');
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date(2026, 8, 1));
   const [startDate, setStartDate] = useState('2026-09-01');
   const [endDate, setEndDate] = useState('2027-06-15');
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -144,37 +153,21 @@ export default function PlanningPage() {
     if (studyPlan?.endDate) setEndDate(studyPlan.endDate);
   }, [studyPlan]);
 
-  const academicMonths = useMemo(() => [
-    { label: 'EYLÜL', date: new Date(2026, 8, 1) },
-    { label: 'EKİM', date: new Date(2026, 9, 1) },
-    { label: 'KASIM', date: new Date(2026, 10, 1) },
-    { label: 'ARALIK', date: new Date(2026, 11, 1), isAyt: true },
-    { label: 'OCAK', date: new Date(2027, 0, 1) },
-    { label: 'ŞUBAT', date: new Date(2027, 1, 1) },
-    { label: 'MART', date: new Date(2027, 2, 1) },
-    { label: 'NİSAN', date: new Date(2027, 3, 1) },
-    { label: 'MAYIS', date: new Date(2027, 4, 1) },
-    { label: 'HAZİRAN', date: new Date(2027, 5, 1) }
-  ], []);
-
   const filteredPlan = useMemo(() => {
-    if (!studyPlan?.masterPlan) return [];
-    if (viewMode === 'annual') return studyPlan.masterPlan;
-    if (viewMode === 'daily') {
-      return studyPlan.masterPlan.filter((d: any) => 
-        !isBefore(parseISO(d.date), parseISO(startDate)) && 
-        !isAfter(parseISO(d.date), parseISO(endDate))
-      );
-    }
-    const mStr = format(selectedMonth, 'yyyy-MM');
-    return studyPlan.masterPlan.filter((d: any) => d.date.startsWith(mStr));
-  }, [studyPlan, viewMode, startDate, endDate, selectedMonth]);
+    return studyPlan?.masterPlan || [];
+  }, [studyPlan]);
 
   const stats = useMemo(() => {
-    if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, missing: 0, rate: 0 };
-    const total = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.length || 0), 0);
-    const done = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.filter((b: any) => b.status === 'done').length || 0), 0);
-    return { planned: total, completed: done, missing: total - done, rate: Math.round((done / (total || 1)) * 100) };
+    if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, rate: 0 };
+    let total = 0;
+    let done = 0;
+    studyPlan.masterPlan.forEach((day: any) => {
+      day.blocks.forEach((b: any) => {
+        total++;
+        if (b.status === 'done') done++;
+      });
+    });
+    return { planned: total, completed: done, rate: total > 0 ? Math.round((done / total) * 100) : 0 };
   }, [studyPlan]);
 
   const handleTaskAction = async (blockId: string, dayDate: string, action: 'done' | 'delete') => {
@@ -195,14 +188,15 @@ export default function PlanningPage() {
       return day;
     });
     await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
-    toast({ title: action === 'done' ? 'Mühürlendi' : 'Silindi', className: "bg-primary text-white rounded-xl" });
+    toast({ title: "Terminal Güncellendi" });
   };
 
   const handleRegeneratePlan = async () => {
-    if (!db || !user || !userData) return;
+    if (!db || !user) return;
     setIsRegenerating(true);
     try {
-      const newPlan = generateAdaptivePlan(startDate, endDate, userData.completedTopics || {}, studyPlan?.masterPlan || []);
+      const currentPlan = studyPlan?.masterPlan || [];
+      const newPlan = generateAdaptivePlan(startDate, endDate, currentPlan);
       await setDoc(doc(db, 'studyPlans', user.uid), {
         userId: user.uid,
         startDate: startDate,
@@ -210,7 +204,7 @@ export default function PlanningPage() {
         masterPlan: newPlan,
         updatedAt: serverTimestamp()
       }, { merge: true });
-      toast({ title: "TERMİNAL SENKRONİZE EDİLDİ", className: "bg-accent text-primary rounded-2xl font-black shadow-2xl" });
+      toast({ title: "RAPOR BAŞARIYLA ÇALIŞTIRILDI", description: "Mevcut verileriniz korundu, boşluklar dolduruldu." });
     } catch (e) {
       toast({ variant: 'destructive', title: 'Hata' });
     } finally {
@@ -218,211 +212,153 @@ export default function PlanningPage() {
     }
   };
 
-  const handleQuickFilter = (type: string) => {
-    const now = new Date();
-    if (type === 'today') {
-      const d = format(now, 'yyyy-MM-dd');
-      setStartDate(d); setEndDate(d); setViewMode('daily');
-    } else if (type === 'week') {
-      setStartDate(format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-      setEndDate(format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-      setViewMode('daily');
-    } else if (type === 'month') {
-      setStartDate(format(startOfMonth(now), 'yyyy-MM-dd'));
-      setEndDate(format(endOfMonth(now), 'yyyy-MM-dd'));
-      setViewMode('daily');
-    } else if (type === 'year') {
-      setStartDate('2026-09-01');
-      setEndDate('2027-06-15');
-      setViewMode('annual');
-    }
-  };
-
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
-      <div className="mx-auto w-full max-w-[1700px] px-4 py-8 md:px-10 space-y-12">
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10">
-          <div className="flex flex-col gap-6 flex-1 min-w-0">
+      <div className="mx-auto w-full max-w-[1400px] px-6 py-12 space-y-12">
+        
+        {/* HEADER SECTION */}
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
+          <div className="space-y-4">
             <div className="flex items-center gap-4">
-               <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><ArrowLeft className="h-6 w-6" /></Button>
-               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-6 w-6" /></Button>
+               <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-200 hover:bg-primary hover:text-white transition-all"><ArrowLeft className="h-6 w-6" /></Button>
+               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-200 hover:bg-primary hover:text-white transition-all"><Home className="h-6 w-6" /></Button>
             </div>
-            <div className="space-y-2">
-               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> ACADEMIC TERMINAL v48.5</div>
-               <h1 className="text-6xl sm:text-8xl md:text-9xl lg:text-[11rem] font-black tracking-tighter italic text-primary uppercase leading-[0.75] text-shadow-premium break-words">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h1>
-            </div>
+            <h1 className="text-5xl lg:text-7xl font-black tracking-tighter text-primary uppercase italic leading-none">
+              Planlama <br /><span className="text-accent">Merkezi</span>
+            </h1>
           </div>
 
-          <div className="flex flex-col gap-4 w-full lg:w-auto shrink-0">
-            <Card className="p-5 rounded-[2.5rem] border-none shadow-[0_40px_80px_-20px_rgba(15,23,42,0.12)] bg-white flex flex-wrap gap-4 items-end justify-center lg:justify-start relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
-               <div className="space-y-1 relative z-10 flex-1 sm:flex-none">
-                  <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">MİLAT (BAŞLANGIÇ)</Label>
-                  <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setViewMode('daily'); }} className="h-12 w-full sm:w-[150px] rounded-xl bg-slate-50 border-none font-bold text-xs px-4 shadow-inner" />
-               </div>
-               <div className="space-y-1 relative z-10 flex-1 sm:flex-none">
-                  <Label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 ml-2 italic">FİNAL (SINAV)</Label>
-                  <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setViewMode('daily'); }} className="h-12 w-full sm:w-[150px] rounded-xl bg-slate-50 border-none font-bold text-xs px-4 shadow-inner" />
-               </div>
-               <Button onClick={handleRegeneratePlan} disabled={isRegenerating} className="h-12 px-6 rounded-xl bg-primary hover:bg-accent text-white font-black text-[9px] uppercase tracking-widest gap-2 shadow-2xl transition-all relative z-10 w-full sm:w-auto">
-                  {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-accent" />} RAPORU ÇALIŞTIR
-               </Button>
-            </Card>
-            <div className="flex gap-1.5 bg-white p-1.5 rounded-xl border border-primary/5 shadow-lg overflow-x-auto scrollbar-hide">
-              {['today', 'week', 'month', 'year'].map(f => (
-                <button key={f} onClick={() => handleQuickFilter(f)} className="h-9 px-3 rounded-lg font-black text-[8px] uppercase tracking-widest text-primary/40 hover:bg-slate-50 hover:text-primary transition-all">
-                  {f === 'today' ? 'BUGÜN' : f === 'week' ? 'BU HAFTA' : f === 'month' ? 'BU AY' : 'TÜM YIL'}
-                </button>
-              ))}
+          <Card className="p-6 rounded-[2rem] border-none shadow-xl bg-white flex flex-wrap gap-4 items-end">
+            <div className="space-y-1">
+              <Label className="text-[10px] font-black uppercase opacity-40 ml-2">MİLAT</Label>
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
             </div>
-          </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] font-black uppercase opacity-40 ml-2">FİNAL</Label>
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
+            </div>
+            <Button onClick={handleRegeneratePlan} disabled={isRegenerating} className="h-12 px-8 rounded-xl bg-primary hover:bg-accent text-white font-black text-xs uppercase tracking-widest gap-3 shadow-lg">
+              {isRegenerating ? <Loader2 className="animate-spin h-5 w-5" /> : <RefreshCw className="h-5 w-5" />} RAPORU ÇALIŞTIR
+            </Button>
+          </Card>
         </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-           {[
-             { label: 'İLERLEME', val: `%${stats.rate}`, sub: 'YILLIK BAŞARI', color: 'primary', icon: Target },
-             { label: 'PLANLANAN', val: stats.planned, sub: 'TOPLAM GÖREV', color: 'accent', icon: Calendar },
-             { label: 'TAMAMLANAN', val: stats.completed, sub: 'MÜHÜRLENEN', color: 'primary', icon: CheckCircle2 },
-             { label: 'EKSİK', val: stats.missing, sub: 'KRİTİK YOLLAR', color: 'accent', icon: AlertCircle },
-             { label: 'DURUM', val: stats.rate > 70 ? 'STABİL' : 'RİSKLİ', sub: 'AI ANALİZİ', color: 'primary', icon: Brain },
-           ].map((item, i) => (
-               <Card key={i} className="relative overflow-hidden p-6 rounded-[2rem] border-none bg-white shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                 <div className="relative z-10 space-y-4">
-                    <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-lg", item.color === 'accent' ? 'bg-accent' : 'bg-primary')}>
-                       <item.icon className="h-5 w-5" strokeWidth={2.5} />
-                    </div>
-                    <div>
-                       <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1 italic">{item.label}</p>
-                       <p className="text-4xl lg:text-5xl font-black text-primary italic tracking-tighter leading-none">{item.val}</p>
-                       <p className="text-[9px] font-bold uppercase tracking-wider text-primary/30 mt-2">{item.sub}</p>
-                    </div>
-                 </div>
-               </Card>
-           ))}
+        {/* STATS */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+           <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-lg text-center space-y-2">
+              <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">İlerleme</p>
+              <p className="text-5xl font-black text-primary italic">%{stats.rate}</p>
+           </Card>
+           <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-lg text-center space-y-2">
+              <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Toplam Görev</p>
+              <p className="text-5xl font-black text-primary italic">{stats.planned}</p>
+           </Card>
+           <Card className="p-8 rounded-[2.5rem] bg-white border-none shadow-lg text-center space-y-2">
+              <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Tamamlanan</p>
+              <p className="text-5xl font-black text-accent italic">{stats.completed}</p>
+           </Card>
+           <Card className="p-8 rounded-[2.5rem] bg-primary text-white border-none shadow-lg text-center space-y-2">
+              <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Kalan</p>
+              <p className="text-5xl font-black text-accent italic">{stats.planned - stats.completed}</p>
+           </Card>
         </div>
 
-        <div className="space-y-12">
+        {/* PLAN FEED */}
+        <div className="space-y-16">
           {filteredPlan.map((day: any) => (
             <div key={day.date} className="space-y-8">
-               <div className="flex items-center gap-6 px-2">
-                  <h3 className="text-2xl md:text-4xl font-black italic text-primary uppercase tracking-tighter">{format(parseISO(day.date), 'd MMMM yyyy', { locale: tr })}</h3>
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <Badge variant="outline" className="h-10 px-4 rounded-xl font-black uppercase border-2 border-slate-100 text-primary text-[10px]">{day.day}</Badge>
-               </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                  {day.blocks?.map((block: any) => {
-                    const isDone = block.status === 'done' || block.status === 'completed';
-                    const sourceCount = [block.youtubeUrl, block.mebiUrl, block.customLinkUrl].filter(Boolean).length;
-                    return (
-                      <Card 
-                        key={block.id} 
-                        className={cn(
-                          "aspect-square p-0 rounded-[2.5rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col",
-                          "shadow-[0_15px_40px_-15px_rgba(15,23,42,0.15)] hover:shadow-[0_35px_70px_-20px_rgba(15,23,42,0.28)] hover:-translate-y-2",
-                          isDone && "opacity-75"
-                        )}
+              <div className="flex items-center gap-4">
+                <h3 className="text-3xl font-black text-primary uppercase italic">{format(parseISO(day.date), 'd MMMM', { locale: tr })}</h3>
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-sm font-black text-accent uppercase">{day.day}</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {day.blocks.map((block: any) => (
+                  <Card key={block.id} className={cn(
+                    "min-h-[220px] rounded-[2rem] border-none shadow-lg p-6 flex flex-col justify-between transition-all hover:-translate-y-1 relative",
+                    block.status === 'done' ? "bg-emerald-50/50 opacity-80" : "bg-white"
+                  )}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full">
+                        <Clock className="h-3 w-3" />
+                        <span className="text-[10px] font-black">{block.time}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleTaskAction(block.id, day.date, 'done')}
+                        className={cn("h-8 w-8 rounded-full flex items-center justify-center transition-all shadow-md", block.status === 'done' ? "bg-emerald-500 text-white" : "bg-white text-slate-300")}
                       >
-                         <div className={cn("h-1.5 w-full shrink-0", isDone ? "bg-emerald-500" : "bg-primary")} />
-                         <div className="flex-1 flex flex-col p-6 sm:p-7 relative z-10 min-h-0">
-                            <div className="flex justify-between items-center shrink-0">
-                               <div className="flex items-center gap-2">
-                                  <div className="px-3 py-1.5 rounded-xl bg-primary/5 text-primary border border-primary/10 flex items-center gap-1.5">
-                                     <Clock className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                     <span className="text-[10px] font-black tracking-wider">{block.time}</span>
-                                  </div>
-                                  <span className="text-[8px] font-black text-primary/20 uppercase tracking-[0.25em] italic">#{block.examType}</span>
-                               </div>
-                               <button
-                                 onClick={() => handleTaskAction(block.id, day.date, 'done')}
-                                 className={cn(
-                                   "px-3.5 py-1.5 rounded-lg text-[8px] font-black shadow-md border-none cursor-pointer active:scale-95 transition-all uppercase tracking-widest flex items-center gap-1.5",
-                                   isDone ? "bg-emerald-500 text-white" : "bg-[#FF4D6D] text-white"
-                                 )}
-                               >
-                                 {isDone ? <CheckCircle2 className="h-3 w-3" strokeWidth={3} /> : null}
-                                 {isDone ? 'TAMAM' : 'BEK'}
-                               </button>
-                            </div>
-                            <div className="flex-1 flex items-center justify-center py-4 overflow-hidden px-1">
-                              <h4 className={cn("text-2xl md:text-3xl lg:text-4xl font-black italic leading-[1.05] tracking-tighter uppercase text-center break-words line-clamp-3", isDone ? "text-primary/40 line-through" : "text-primary")}>
-                                {block.topic}
-                              </h4>
-                            </div>
-                            <div className="shrink-0 bg-slate-50 rounded-[1.75rem] p-3.5 space-y-3 border border-slate-100 shadow-inner">
-                               {sourceCount > 0 && (
-                                 <div className="flex items-center justify-between">
-                                   <span className="text-[7px] font-black text-primary/25 uppercase tracking-[0.3em] italic">KAYNAKLAR</span>
-                                   <div className="flex gap-2 items-center">
-                                      {block.youtubeUrl && <a href={block.youtubeUrl} target="_blank" rel="noreferrer" className="h-7 w-7 rounded-lg bg-rose-50 flex items-center justify-center"><Youtube className="h-3.5 w-3.5 text-rose-500" /></a>}
-                                      {block.mebiUrl && <a href={block.mebiUrl} target="_blank" rel="noreferrer" className="h-7 w-7 rounded-lg bg-emerald-50 flex items-center justify-center"><GraduationCap className="h-3.5 w-3.5 text-emerald-500" /></a>}
-                                      {block.customLinkUrl && <a href={block.customLinkUrl} target="_blank" rel="noreferrer" className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center"><LinkIcon className="h-3.5 w-3.5 text-primary" /></a>}
-                                   </div>
-                                 </div>
-                               )}
-                               <div className="flex gap-2">
-                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-9 rounded-xl bg-primary hover:bg-accent text-white font-black uppercase text-[9px] tracking-[0.25em] gap-1.5 shadow-lg">
-                                    DÜZENLE <Edit3 className="h-3 w-3 text-accent" strokeWidth={2.5} />
-                                  </Button>
-                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-9 w-9 rounded-xl bg-white text-slate-300 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-slate-100 flex items-center justify-center">
-                                    <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-                                  </button>
-                               </div>
-                            </div>
-                         </div>
-                      </Card>
-                    );
-                  })}
-                  <button onClick={() => {}} className="aspect-square p-6 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all group bg-white/50">
-                     <Plus className="h-7 w-7 text-primary/30 group-hover:text-primary transition-colors" strokeWidth={3} />
-                     <p className="text-[11px] font-black uppercase tracking-[0.25em] text-primary/40 group-hover:text-primary transition-colors">GÖREV EKLE</p>
-                  </button>
-               </div>
+                        <CheckCircle2 className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 mb-4">
+                      <p className="text-[9px] font-black text-accent uppercase tracking-widest mb-1">{block.lesson}</p>
+                      <h4 className="text-xl font-black text-primary leading-tight uppercase italic">{block.topic}</h4>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div className="flex gap-2">
+                        {block.youtubeUrl && <Youtube className="h-4 w-4 text-rose-500" />}
+                        {block.mebiUrl && <GraduationCap className="h-4 w-4 text-emerald-500" />}
+                        {block.customLinkUrl && <LinkIcon className="h-4 w-4 text-primary" />}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="h-8 w-8 rounded-lg bg-slate-50"><Edit3 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-8 w-8 rounded-lg bg-slate-50 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                
+                {/* ADD BUTTON */}
+                <button className="min-h-[220px] rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 hover:bg-accent/5 hover:border-accent transition-all group">
+                   <Plus className="h-8 w-8 text-slate-300 group-hover:text-accent" />
+                   <span className="text-[10px] font-black text-slate-400 group-hover:text-accent uppercase tracking-widest">GÖREV EKLE</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* EDIT DIALOG */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="rounded-[4rem] border-none shadow-2xl p-10 bg-white max-w-lg overflow-hidden">
-           <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-6 mb-6">
-              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">DÜZENLE</DialogTitle>
-              <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-10 w-10 bg-slate-50"><X className="h-5 w-5" /></Button>
-           </DialogHeader>
-           {editingBlock && (
-             <div className="space-y-8">
-                <div className="space-y-3">
-                  <Label className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40 ml-4 italic">KONU ADI</Label>
-                  <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value, isManuallyEdited: true})} className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-lg px-8" />
+        <DialogContent className="rounded-[3rem] p-10 bg-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black text-primary uppercase italic">Görevi Düzenle</DialogTitle>
+          </DialogHeader>
+          {editingBlock && (
+            <div className="space-y-6 pt-6">
+              <div className="space-y-2">
+                <Label>Konu / Görev Başlığı</Label>
+                <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>YouTube Linki</Label>
+                  <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl" />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                   <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">YOUTUBE</Label>
-                      <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner text-xs px-6" placeholder="URL" />
-                   </div>
-                   <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase opacity-40 ml-4">ÖZEL LİNK</Label>
-                      <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl bg-slate-50 border-none shadow-inner text-xs px-6" placeholder="URL" />
-                   </div>
+                <div className="space-y-2">
+                  <Label>Özel Link</Label>
+                  <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl" />
                 </div>
-                <Button onClick={async () => {
-                  if (!db || !user || !studyPlan) return;
-                  const newPlan = studyPlan.masterPlan.map((day: any) => {
-                    if (day.date === editingBlock.date) {
-                      return { ...day, blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) };
-                    }
-                    return day;
-                  });
-                  await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
-                  setIsEditDialogOpen(false);
-                  toast({ title: 'Güncellendi', className: "bg-primary text-white rounded-2xl shadow-2xl" });
-                }} className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-accent text-white font-black text-lg uppercase tracking-[0.3em] gap-4 shadow-2xl transition-all">
-                  KAYDET <Save className="h-6 w-6 text-accent" />
-                </Button>
-             </div>
-           )}
+              </div>
+              <Button onClick={async () => {
+                const newPlan = studyPlan.masterPlan.map((day: any) => {
+                  if (day.date === editingBlock.date) {
+                    return { ...day, blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) };
+                  }
+                  return day;
+                });
+                await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
+                setIsEditDialogOpen(false);
+                toast({ title: "Güncellendi" });
+              }} className="w-full h-16 rounded-2xl bg-primary text-white font-black uppercase tracking-widest">GÜNCELLE</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
