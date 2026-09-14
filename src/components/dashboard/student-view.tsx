@@ -21,7 +21,8 @@ import {
   Globe,
   Library,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -128,7 +129,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
         <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> ACADEMIC COMMAND v61.0
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> ACADEMIC COMMAND v62.0
             </div>
             <h2 className="text-6xl md:text-7xl font-black italic tracking-tighter text-primary uppercase leading-[0.9]">
               Bugünkü <br /><span className="text-accent">Blokların</span>
@@ -156,7 +157,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
               <Card 
                 key={block.id}
                 className={cn(
-                  "min-h-[450px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
+                  "min-h-[480px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
                   isDone && "opacity-60 grayscale-[0.5]"
                 )}
               >
@@ -179,7 +180,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
 
                   <div className="space-y-4">
                     <h4 className={cn(
-                      "text-4xl font-black italic tracking-tighter text-primary uppercase leading-[0.95]",
+                      "text-4xl font-black italic tracking-tighter text-primary uppercase leading-[0.95] line-clamp-3 min-h-[110px]",
                       isDone && "line-through opacity-30"
                     )}>
                       {block.topic}
@@ -228,7 +229,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
           {(!currentDayPlan || !currentDayPlan.blocks || currentDayPlan.blocks.length === 0) && (
             <Card 
               onClick={() => router.push('/dashboard/planning')}
-              className="xl:col-span-4 h-[450px] rounded-[4rem] border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-8 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all group"
+              className="xl:col-span-4 h-[450px] rounded-[4rem] border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-8 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all group w-full"
             >
                <Zap className="h-16 w-16 text-slate-100 group-hover:text-accent transition-colors" strokeWidth={3} />
                <div className="text-center space-y-3">

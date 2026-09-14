@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -12,7 +11,7 @@ import {
   ArrowLeft, Home, Edit3, Youtube, Save, FileText, 
   BookOpen, X, Clock, Target, Brain,
   CheckCircle2, AlertCircle, Trash2, Link as LinkIcon, GraduationCap,
-  Plus, School, ExternalLink, ChevronRight
+  Plus, School, ExternalLink, ChevronRight, Library, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { doc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -27,12 +26,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from '@/components/ui/badge';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
 /**
- * MASTER ADAPTIVE PLANNER v60.0
- * Oluşturulan plan günlük, haftalık, aylık ve yıllık hiyerarşiye sahiptir.
+ * MASTER ADAPTIVE PLANNER v62.0
+ * YKS 2026-2027 Döngüsü için otonom müfredat dağıtım motoru.
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -74,14 +72,11 @@ const generateAdaptivePlan = (
     const dayName = format(currentDate, 'EEEE', { locale: tr });
     const isAytStarted = !isBefore(currentDate, aytDate);
     
-    // Mevcut günü bul
     const existingDay = existingPlan.find(d => d.date === dateStr);
     const dailyBlocks: any[] = [];
 
-    // Veri koruma fonksiyonu (Zero-Loss)
     const getProtectedBlock = (time: string, defaultData: any) => {
       const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      // Eğer blok mühürlenmişse veya manuel veri girilmişse KORU
       if (existing && (
         existing.status === 'done' || 
         existing.isManuallyEdited || 
@@ -102,8 +97,7 @@ const generateAdaptivePlan = (
       };
     };
 
-    // Yıllık Stratejiye Göre Blok Dağıtımı
-    // 10:00 - Ana Akademik Blok (TYT/AYT)
+    // Stratejik Blok Dağıtımı
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
@@ -113,7 +107,6 @@ const generateAdaptivePlan = (
       examType: isAytStarted ? 'AYT' : 'TYT'
     }));
 
-    // 11:00 - Destekleyici Blok (Sürekli TYT/Matematik Takviyesi)
     const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = tytLessons[(i + 2) % tytLessons.length];
     dailyBlocks.push(getProtectedBlock('11:00', {
@@ -122,14 +115,12 @@ const generateAdaptivePlan = (
       examType: 'TYT'
     }));
 
-    // 12:00 - Stratejik Tekrar
     dailyBlocks.push(getProtectedBlock('12:00', {
       lesson: 'STRATEJİK TEKRAR',
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
       examType: 'GENEL'
     }));
 
-    // 15:00 - Odaklanma Bloğu (Paragraf)
     dailyBlocks.push(getProtectedBlock('15:00', {
       lesson: 'TYT TÜRKÇE',
       topic: '20 ADET PARAGRAF KONDİSYONU',
@@ -164,17 +155,17 @@ export default function PlanningPage() {
 
   const filteredPlan = useMemo(() => {
     if (!studyPlan?.masterPlan) return [];
-    return studyPlan.masterPlan.filter((d: any) => 
+    return [...studyPlan.masterPlan].filter((d: any) => 
       !isBefore(parseISO(d.date), parseISO(startDate)) && 
       !isAfter(parseISO(d.date), parseISO(endDate))
     ).sort((a: any, b: any) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
   }, [studyPlan, startDate, endDate]);
 
   const stats = useMemo(() => {
-    if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, missing: 0, rate: 0 };
+    if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, rate: 0 };
     const total = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.length || 0), 0);
     const done = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.filter((b: any) => b.status === 'done').length || 0), 0);
-    return { planned: total, completed: done, missing: total - done, rate: Math.round((done / (total || 1)) * 100) };
+    return { planned: total, completed: done, rate: Math.round((done / (total || 1)) * 100) };
   }, [studyPlan]);
 
   const handleTaskAction = async (blockId: string, dayDate: string, action: 'done' | 'delete') => {
@@ -216,7 +207,6 @@ export default function PlanningPage() {
         className: "bg-[#0F172A] text-white rounded-[2rem] shadow-2xl"
       });
     } catch (e) {
-      console.error(e);
       toast({ variant: 'destructive', title: 'Hata oluştu' });
     } finally {
       setIsRegenerating(false);
@@ -225,7 +215,7 @@ export default function PlanningPage() {
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
-      <div className="mx-auto w-full max-w-[1600px] px-6 py-12 space-y-16">
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-12 space-y-16">
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
           <div className="space-y-4">
              <div className="flex items-center gap-4">
@@ -233,12 +223,12 @@ export default function PlanningPage() {
                 <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-6 w-6" /></Button>
              </div>
              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v60.0</div>
-                <h2 className="text-7xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none">Akademik <br /><span className="text-accent">Terminal</span></h2>
+                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v62.0</div>
+                <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none">Akademik <br /><span className="text-accent">Terminal</span></h2>
              </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-end gap-6 bg-white p-10 rounded-[3rem] shadow-xl border border-primary/5 w-full lg:w-auto group">
+          <div className="flex flex-col md:flex-row items-end gap-6 bg-white p-10 rounded-[3rem] shadow-xl border border-primary/5 w-full lg:w-auto">
              <div className="space-y-2 w-full md:w-auto">
                 <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BAŞLANGIÇ</Label>
                 <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-16 rounded-2xl bg-slate-50 border-none font-black text-sm" />
@@ -253,29 +243,6 @@ export default function PlanningPage() {
           </div>
         </header>
 
-        {/* İstatistikler */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-           {[
-             { label: 'İLERLEME', val: `%${stats.rate}`, icon: CheckCircle2, color: 'text-emerald-500' },
-             { label: 'PLANLANAN', val: stats.planned, icon: Target, color: 'text-primary' },
-             { label: 'BEKLEYEN', val: stats.missing, icon: AlertCircle, color: 'text-accent' },
-             { label: 'MOD', val: 'TM SÖZEL+', icon: Brain, color: 'text-indigo-500' },
-           ].map((item, i) => (
-             <Card key={i} className="p-8 rounded-[2.5rem] border-none bg-white shadow-lg group hover:-translate-y-1 transition-all">
-                <div className="flex items-center gap-6">
-                   <div className="h-16 w-16 rounded-[1.25rem] bg-slate-50 flex items-center justify-center group-hover:bg-primary transition-all">
-                      <item.icon className={cn("h-8 w-8 transition-colors group-hover:text-white", item.color)} />
-                   </div>
-                   <div>
-                      <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest italic">{item.label}</p>
-                      <p className="text-3xl font-black text-[#0F172A] italic tracking-tighter">{item.val}</p>
-                   </div>
-                </div>
-             </Card>
-           ))}
-        </div>
-
-        {/* Takvim Akışı */}
         <div className="space-y-32">
           {filteredPlan.map((day: any) => (
             <div key={day.date} className="space-y-12">
@@ -292,29 +259,29 @@ export default function PlanningPage() {
                       <Card 
                         key={block.id} 
                         className={cn(
-                          "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-[0_40px_80px_-20px_rgba(0,0,0,0.06)] hover:-translate-y-3 hover:shadow-2xl",
+                          "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-lg hover:-translate-y-2 hover:shadow-2xl",
                           isDone && "opacity-60"
                         )}
                       >
-                         <div className={cn("h-2.5 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
+                         <div className={cn("h-2 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
                          <div className="p-10 space-y-10 flex-1 flex flex-col">
                             <div className="flex justify-between items-center">
-                               <div className="px-5 py-2.5 rounded-xl bg-slate-50 text-[10px] font-black text-primary/40 border border-slate-100 italic">{block.time}</div>
-                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black shadow-lg transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-[#0F172A] text-white hover:bg-accent")}>
+                               <div className="px-5 py-2 rounded-xl bg-slate-50 text-[10px] font-black text-primary/40 border border-slate-100 italic">{block.time}</div>
+                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-5 py-2 rounded-xl text-[9px] font-black shadow-lg transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-[#0F172A] text-white hover:bg-accent")}>
                                  {isDone ? 'TAMAMLANDI' : 'MÜHÜRLE'}
                                </button>
                             </div>
                             <div className="flex-1 flex items-center justify-center py-6 min-h-[160px]">
-                              <h4 className={cn("text-4xl font-black text-center uppercase tracking-tight leading-[0.95] italic", isDone ? "text-slate-300 line-through" : "text-[#0F172A]")}>
+                              <h4 className={cn("text-4xl font-black text-center uppercase tracking-tight leading-[0.95] italic line-clamp-3", isDone ? "text-slate-300 line-through" : "text-[#0F172A]")}>
                                 {block.topic}
                               </h4>
                             </div>
                             <div className="bg-[#F8FAFC] rounded-[2.5rem] p-8 space-y-8 shadow-inner border border-white">
                                <div className="flex justify-center gap-4">
                                   <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-white text-slate-300 hover:text-rose-500")}><Youtube className="h-6 w-6" /></a>
-                                  <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")}><GraduationCap className="h-6 w-6" /></a>
-                                  <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")}><School className="h-6 w-6" /></a>
-                                  <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")}><BookOpen className="h-6 w-6" /></a>
+                                  <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")}><School className="h-6 w-6" /></a>
+                                  <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")}><Globe className="h-6 w-6" /></a>
+                                  <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")}><Library className="h-6 w-6" /></a>
                                   <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-[#0F172A] text-white scale-110" : "bg-white text-slate-300 hover:text-primary")}><LinkIcon className="h-6 w-6" /></a>
                                </div>
                                <div className="flex gap-2">
@@ -327,7 +294,7 @@ export default function PlanningPage() {
                     );
                   })}
                   <button className="min-h-[400px] rounded-[3.5rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-6 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
-                     <Plus className="h-12 w-12 text-slate-100 group-hover:text-accent transition-colors" strokeWidth={3} />
+                     <Plus className="h-12 w-12 text-slate-100 group-hover:text-accent" strokeWidth={3} />
                      <span className="text-[12px] font-black text-slate-200 group-hover:text-accent uppercase tracking-[0.3em]">GÖREV EKLE</span>
                   </button>
                </div>
