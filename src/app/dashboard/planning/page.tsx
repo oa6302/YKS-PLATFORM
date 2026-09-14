@@ -29,7 +29,7 @@ import {
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
 /**
- * MASTER ADAPTIVE PLANNER v62.0
+ * MASTER ADAPTIVE PLANNER v64.0
  * YKS 2026-2027 Döngüsü için otonom müfredat dağıtım motoru.
  */
 const generateAdaptivePlan = (
@@ -161,13 +161,6 @@ export default function PlanningPage() {
     ).sort((a: any, b: any) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
   }, [studyPlan, startDate, endDate]);
 
-  const stats = useMemo(() => {
-    if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, rate: 0 };
-    const total = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.length || 0), 0);
-    const done = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.filter((b: any) => b.status === 'done').length || 0), 0);
-    return { planned: total, completed: done, rate: Math.round((done / (total || 1)) * 100) };
-  }, [studyPlan]);
-
   const handleTaskAction = async (blockId: string, dayDate: string, action: 'done' | 'delete') => {
     if (!db || !user || !studyPlan) return;
     const newPlan = studyPlan.masterPlan.map((day: any) => {
@@ -202,7 +195,7 @@ export default function PlanningPage() {
         updatedAt: serverTimestamp()
       }, { merge: true });
       toast({ 
-        title: "DİNAMİK SENKRONİZASYON", 
+        title: "PROGRAM SENKRONİZE EDİLDİ", 
         description: "Yıllık strateji terminale saniyeler içinde mühürlendi.",
         className: "bg-[#0F172A] text-white rounded-[2rem] shadow-2xl"
       });
@@ -214,93 +207,94 @@ export default function PlanningPage() {
   };
 
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
-      <div className="mx-auto w-full max-w-[1500px] px-6 py-12 space-y-16">
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
-          <div className="space-y-4">
-             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><ArrowLeft className="h-6 w-6" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-6 w-6" /></Button>
-             </div>
-             <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v62.0</div>
-                <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none">Akademik <br /><span className="text-accent">Terminal</span></h2>
-             </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-end gap-6 bg-white p-10 rounded-[3rem] shadow-xl border border-primary/5 w-full lg:w-auto">
-             <div className="space-y-2 w-full md:w-auto">
-                <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BAŞLANGIÇ</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-16 rounded-2xl bg-slate-50 border-none font-black text-sm" />
-             </div>
-             <div className="space-y-2 w-full md:w-auto">
-                <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BİTİŞ</Label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-16 rounded-2xl bg-slate-50 border-none font-black text-sm" />
-             </div>
-             <Button onClick={handleCreateProgram} disabled={isRegenerating} className="h-16 px-12 rounded-2xl bg-primary hover:bg-accent text-white font-black text-xs uppercase tracking-widest gap-4 shadow-2xl transition-all w-full md:w-auto">
-                {isRegenerating ? <Loader2 className="h-6 w-6 animate-spin" /> : <Sparkles className="h-6 w-6 text-accent" />} PROGRAMI OLUŞTUR
-             </Button>
-          </div>
-        </header>
-
-        <div className="space-y-32">
-          {filteredPlan.map((day: any) => (
-            <div key={day.date} className="space-y-12">
-               <div className="flex items-center gap-8 px-4">
-                  <h3 className="text-5xl font-black italic tracking-tighter text-[#0F172A] uppercase leading-none">{format(parseISO(day.date), 'd MMMM yyyy', { locale: tr })}</h3>
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.4em] text-primary/30 italic">{day.day}</span>
-               </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {day.blocks?.map((block: any) => {
-                    const isDone = block.status === 'done';
-                    return (
-                      <Card 
-                        key={block.id} 
-                        className={cn(
-                          "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-lg hover:-translate-y-2 hover:shadow-2xl",
-                          isDone && "opacity-60"
-                        )}
-                      >
-                         <div className={cn("h-2 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
-                         <div className="p-10 space-y-10 flex-1 flex flex-col">
-                            <div className="flex justify-between items-center">
-                               <div className="px-5 py-2 rounded-xl bg-slate-50 text-[10px] font-black text-primary/40 border border-slate-100 italic">{block.time}</div>
-                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-5 py-2 rounded-xl text-[9px] font-black shadow-lg transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-[#0F172A] text-white hover:bg-accent")}>
-                                 {isDone ? 'TAMAMLANDI' : 'MÜHÜRLE'}
-                               </button>
-                            </div>
-                            <div className="flex-1 flex items-center justify-center py-6 min-h-[160px]">
-                              <h4 className={cn("text-4xl font-black text-center uppercase tracking-tight leading-[0.95] italic line-clamp-3", isDone ? "text-slate-300 line-through" : "text-[#0F172A]")}>
-                                {block.topic}
-                              </h4>
-                            </div>
-                            <div className="bg-[#F8FAFC] rounded-[2.5rem] p-8 space-y-8 shadow-inner border border-white">
-                               <div className="flex justify-center gap-4">
-                                  <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-white text-slate-300 hover:text-rose-500")}><Youtube className="h-6 w-6" /></a>
-                                  <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")}><School className="h-6 w-6" /></a>
-                                  <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")}><Globe className="h-6 w-6" /></a>
-                                  <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")}><Library className="h-6 w-6" /></a>
-                                  <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-[#0F172A] text-white scale-110" : "bg-white text-slate-300 hover:text-primary")}><LinkIcon className="h-6 w-6" /></a>
-                               </div>
-                               <div className="flex gap-2">
-                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-12 rounded-xl bg-white border border-slate-100 hover:bg-primary hover:text-white text-primary font-black uppercase text-[9px] gap-3 shadow-sm transition-all"><Edit3 className="h-4 w-4" /> DÜZENLE</Button>
-                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-12 w-12 rounded-xl bg-white text-slate-200 hover:bg-destructive hover:text-white transition-all flex items-center justify-center border border-slate-100 shadow-sm"><Trash2 className="h-5 w-5" /></button>
-                               </div>
-                            </div>
-                         </div>
-                      </Card>
-                    );
-                  })}
-                  <button className="min-h-[400px] rounded-[3.5rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-6 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
-                     <Plus className="h-12 w-12 text-slate-100 group-hover:text-accent" strokeWidth={3} />
-                     <span className="text-[12px] font-black text-slate-200 group-hover:text-accent uppercase tracking-[0.3em]">GÖREV EKLE</span>
-                  </button>
-               </div>
-            </div>
-          ))}
+    <div className="p-8 lg:p-14 space-y-12 max-w-7xl mx-auto w-full animate-in fade-in duration-1000 bg-[#F8FAFC]">
+      <header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
+        <div className="space-y-4">
+           <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><ArrowLeft className="h-5 w-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
+           </div>
+           <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v64.0</div>
+              <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
+           </div>
         </div>
+
+        <div className="flex flex-col md:flex-row items-end gap-6 bg-white p-8 rounded-[3rem] shadow-xl border border-primary/5 w-full xl:w-auto">
+           <div className="space-y-2 w-full md:w-auto">
+              <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BAŞLANGIÇ</Label>
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none font-black text-sm" />
+           </div>
+           <div className="space-y-2 w-full md:w-auto">
+              <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BİTİŞ</Label>
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none font-black text-sm" />
+           </div>
+           <Button onClick={handleCreateProgram} disabled={isRegenerating} className="h-14 px-10 rounded-2xl bg-primary hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest gap-4 shadow-2xl transition-all w-full md:w-auto">
+              {isRegenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-accent" />} PROGRAMI OLUŞTUR
+           </Button>
+        </div>
+      </header>
+
+      <div className="space-y-24">
+        {filteredPlan.map((day: any) => (
+          <div key={day.date} className="space-y-10">
+             <div className="flex items-center gap-8 px-4">
+                <h3 className="text-4xl font-black italic tracking-tighter text-[#0F172A] uppercase leading-none">{format(parseISO(day.date), 'd MMMM yyyy', { locale: tr })}</h3>
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/30 italic">{day.day}</span>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {day.blocks?.map((block: any) => {
+                  const isDone = block.status === 'done';
+                  return (
+                    <Card 
+                      key={block.id} 
+                      className={cn(
+                        "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-lg hover:-translate-y-2 hover:shadow-2xl",
+                        isDone && "opacity-60"
+                      )}
+                    >
+                       <div className={cn("h-1.5 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
+                       <div className="p-8 space-y-8 flex-1 flex flex-col justify-between">
+                          <div className="flex justify-between items-center">
+                             <div className="px-4 py-2 rounded-xl bg-slate-50 text-[9px] font-black text-primary/40 border border-slate-100 italic">{block.time}</div>
+                             <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-4 py-2 rounded-xl text-[8px] font-black shadow-lg transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-[#0F172A] text-white hover:bg-accent")}>
+                               {isDone ? 'TAMAMLANDI' : 'MÜHÜRLE'}
+                             </button>
+                          </div>
+                          
+                          <div className="space-y-4 text-center">
+                            <h4 className={cn("text-3xl font-black uppercase tracking-tight leading-[0.95] italic line-clamp-3 min-h-[85px]", isDone ? "text-slate-300 line-through" : "text-[#0F172A]")}>
+                              {block.topic}
+                            </h4>
+                            <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-40">{block.lesson}</p>
+                          </div>
+
+                          <div className="bg-[#F8FAFC] rounded-[2.5rem] p-6 space-y-6 shadow-inner border border-white">
+                             <div className="flex justify-between gap-2">
+                                <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-white text-slate-300 hover:text-rose-500")}><Youtube className="h-5 w-5" /></a>
+                                <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")}><School className="h-5 w-5" /></a>
+                                <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")}><Globe className="h-5 w-5" /></a>
+                                <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")}><Library className="h-5 w-5" /></a>
+                                <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-[#0F172A] text-white scale-110" : "bg-white text-slate-300 hover:text-primary")}><LinkIcon className="h-5 w-5" /></a>
+                             </div>
+                             <div className="flex gap-2">
+                                <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-10 rounded-xl bg-white border border-slate-100 hover:bg-primary hover:text-white text-primary font-black uppercase text-[8px] gap-2 shadow-sm transition-all"><Edit3 className="h-3 w-3" /> DÜZENLE</Button>
+                                <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-10 w-10 rounded-xl bg-white text-slate-200 hover:bg-destructive hover:text-white transition-all flex items-center justify-center border border-slate-100 shadow-sm"><Trash2 className="h-4 w-4" /></button>
+                             </div>
+                          </div>
+                       </div>
+                    </Card>
+                  );
+                })}
+                <button className="min-h-[400px] rounded-[3.5rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-6 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
+                   <Plus className="h-12 w-12 text-slate-100 group-hover:text-accent" strokeWidth={3} />
+                   <span className="text-[12px] font-black text-slate-200 group-hover:text-accent uppercase tracking-[0.3em]">GÖREV EKLE</span>
+                </button>
+             </div>
+          </div>
+        ))}
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
