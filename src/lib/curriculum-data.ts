@@ -1,49 +1,25 @@
 /**
- * @fileOverview YKS TM Sözel Odaklı Müfredat Verisi (TYT-AYT)
- * Geometri ve Dil Bilgisi tamamen çıkarılmıştır.
- * Matematik sadece TYT seviyesinde (Geometri hariç) eklenmiştir.
+ * @fileOverview YKS TM (Eşit Ağırlık) - Sözel Odaklı Müfredat Verisi
+ * Dil Bilgisi ve Geometri tamamen çıkarılmıştır.
+ * TYT Matematik (Cebir & Problemler) eklenmiştir.
  */
 
+export const TYT_MATEMATIK = [
+  'Temel Kavramlar', 'Sayı Basamakları', 'Bölme ve Bölünebilme', 'EBOB-EKOK', 
+  'Rasyonel Sayılar', 'Basit Eşitsizlikler', 'Mutlak Değer', 'Üslü Sayılar', 
+  'Köklü Sayılar', 'Çarpanlara Ayırma', 'Oran-Orantı', 'Denklem Çözme', 
+  'Sayı Problemleri', 'Kesir Problemleri', 'Yaş Problemleri', 'İşçi Problemleri', 
+  'Hız ve Hareket Problemleri', 'Yüzde, Kar ve Zarar Problemleri', 'Karışım Problemleri', 
+  'Grafik Problemleri', 'Kümeler', 'Fonksiyonlar', 'Permütasyon - Kombinasyon', 
+  'Olasılık', 'Veri ve İstatistik'
+];
+
 export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
-  'TYT Matematik': [
-    'Temel Kavramlar',
-    'Sayı Basamakları',
-    'Bölme ve Bölünebilme',
-    'EBOB-EKOK',
-    'Rasyonel Sayılar',
-    'Basit Eşitsizlikler',
-    'Mutlak Değer',
-    'Üslü Sayılar',
-    'Köklü Sayılar',
-    'Çarpanlara Ayırma',
-    'Oran-Orantı',
-    'Denklem Çözme',
-    'Sayı Problemleri',
-    'Kesir Problemleri',
-    'Yaş Problemleri',
-    'İşçi Problemleri',
-    'Hız ve Hareket Problemleri',
-    'Yüzde, Kar ve Zarar Problemleri',
-    'Karışım Problemleri',
-    'Grafik Problemleri',
-    'Kümeler',
-    'Fonksiyonlar',
-    'Permütasyon - Kombinasyon',
-    'Olasılık',
-    'Veri ve İstatistik'
-  ],
+  'TYT Matematik': TYT_MATEMATIK,
   'TYT Türkçe': [
-    'Sözcükte Anlam', 
-    'Söz Öbeklerinde Anlam',
-    'Cümlede Anlam', 
-    'Cümlede Kavramlar',
-    'Paragrafta Ana Düşünce', 
-    'Paragrafta Yardımcı Düşünceler', 
-    'Paragrafta Yapı', 
-    'Paragraf Bölme', 
-    'Paragraf Tamamlama', 
-    'Düşünceyi Geliştirme Yolları', 
-    'Anlatım Biçimleri'
+    'Sözcükte Anlam', 'Söz Öbeklerinde Anlam', 'Cümlede Anlam', 'Cümlede Kavramlar',
+    'Paragrafta Ana Düşünce', 'Paragrafta Yardımcı Düşünceler', 'Paragrafta Yapı', 
+    'Paragraf Bölme', 'Paragraf Tamamlama', 'Düşünceyi Geliştirme Yolları', 'Anlatım Biçimleri', 'Sözel Mantık'
   ],
   'TYT Tarih': [
     'Tarih ve Zaman', 'İlk Çağ Uygarlıkları', 'İslam Tarihi', 'Türk-İslam Devletleri', 
@@ -56,12 +32,12 @@ export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
     'Türkiye\'nin Yer Şekilleri', 'Doğal Afetler'
   ],
   'TYT Felsefe': [
-    'Felsefe ile Tanışma', 'Bilgi Felsefesi (Epistemoloji)', 'Varlık Felsefesi (Ontoloji)', 
-    'Ahlak Felsefesi (Etik)', 'Din Felsefesi', 'Siyaset Felsefesi', 'Bilim Felsefesi'
+    'Felsefe ile Tanışma', 'Bilgi Felsefesi', 'Varlık Felsefesi', 'Ahlak Felsefesi', 
+    'Din Felsefesi', 'Siyaset Felsefesi', 'Bilim Felsefesi'
   ],
   'TYT Din': [
-    'Bilgi ve İnanç', 'İbadet ve Ahlak', 'Hz. Muhammed (S.A.V)', 'Vahiy ve Akıl', 'İslam ve Barış',
-    'Türklerin Müslüman Olma Süreci', 'İslam Medeniyetinde Bilim'
+    'Bilgi ve İnanç', 'İbadet ve Ahlak', 'Hz. Muhammed (S.A.V)', 'Vahiy ve Akıl', 
+    'İslam ve Barış', 'Türklerin Müslüman Olma Süreci', 'İslam Medeniyetinde Bilim'
   ]
 };
 
