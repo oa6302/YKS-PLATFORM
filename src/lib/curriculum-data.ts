@@ -1,10 +1,37 @@
 /**
  * @fileOverview YKS TM Sözel Odaklı Müfredat Verisi (TYT-AYT)
- * Geometri, Dil Bilgisi ve Sayısal dersler tamamen çıkarılmıştır.
- * Sadece anlam ve yorumlama odaklıdır.
+ * Geometri ve Dil Bilgisi tamamen çıkarılmıştır.
+ * Matematik sadece TYT seviyesinde (Geometri hariç) eklenmiştir.
  */
 
 export const TYT_SOZEL_TOPICS: Record<string, string[]> = {
+  'TYT Matematik': [
+    'Temel Kavramlar',
+    'Sayı Basamakları',
+    'Bölme ve Bölünebilme',
+    'EBOB-EKOK',
+    'Rasyonel Sayılar',
+    'Basit Eşitsizlikler',
+    'Mutlak Değer',
+    'Üslü Sayılar',
+    'Köklü Sayılar',
+    'Çarpanlara Ayırma',
+    'Oran-Orantı',
+    'Denklem Çözme',
+    'Sayı Problemleri',
+    'Kesir Problemleri',
+    'Yaş Problemleri',
+    'İşçi Problemleri',
+    'Hız ve Hareket Problemleri',
+    'Yüzde, Kar ve Zarar Problemleri',
+    'Karışım Problemleri',
+    'Grafik Problemleri',
+    'Kümeler',
+    'Fonksiyonlar',
+    'Permütasyon - Kombinasyon',
+    'Olasılık',
+    'Veri ve İstatistik'
+  ],
   'TYT Türkçe': [
     'Sözcükte Anlam', 
     'Söz Öbeklerinde Anlam',

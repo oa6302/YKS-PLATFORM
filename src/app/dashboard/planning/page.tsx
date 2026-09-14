@@ -42,7 +42,7 @@ const generateAdaptivePlan = (
   const endDate = parseISO(endDateStr);
   const daysInterval = differenceInDays(endDate, startDate);
 
-  if (daysInterval <= 0) return [];
+  if (daysInterval < 0) return [];
 
   const finishedSet = new Set(Object.values(completedTopics).flat());
   const lessonPointers: Record<string, number> = {};
@@ -76,7 +76,7 @@ const generateAdaptivePlan = (
 
     const getProtectedBlock = (time: string, defaultData: any) => {
       const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      // Zero-Loss Condition: If done or has links or edited, keep it
+      // Zero-Loss Condition: If done, has links, or manually edited, do not overwrite
       if (existing && (
           existing.status === 'done' || 
           existing.isManuallyEdited || 
@@ -91,11 +91,10 @@ const generateAdaptivePlan = (
       return { id: `block_${dateStr}_${time.replace(':', '')}`, time, ...defaultData };
     };
 
+    // 10:00 - Main Subject (Rotates between all TYT + AYT after Dec)
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
-    
-    // Block 1: 10:00 - Main Subject
     dailyBlocks.push(getProtectedBlock('10:00', {
       lesson: p1L,
       topic: getNextTopic(p1L, p1Pool),
@@ -103,7 +102,7 @@ const generateAdaptivePlan = (
       examType: isAytStarted ? 'AYT' : 'TYT'
     }));
 
-    // Block 2: 11:00 - Secondary Subject
+    // 11:00 - Secondary Subject (Mainly TYT Math and others)
     const p2Lessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = p2Lessons[(i + 2) % p2Lessons.length];
     dailyBlocks.push(getProtectedBlock('11:00', {
@@ -113,7 +112,7 @@ const generateAdaptivePlan = (
       examType: 'TYT'
     }));
 
-    // Block 3: 12:00 - Review
+    // 12:00 - Strategic Review
     dailyBlocks.push(getProtectedBlock('12:00', {
       lesson: 'STRATEJİK TEKRAR',
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
@@ -121,7 +120,7 @@ const generateAdaptivePlan = (
       examType: 'GENEL'
     }));
 
-    // Block 4: 15:00 - Paragraph
+    // 15:00 - Paragraph Conditioning
     dailyBlocks.push(getProtectedBlock('15:00', {
       lesson: 'TYT TÜRKÇE',
       topic: '20 ADET PARAGRAF KONDİSYONU',
@@ -208,7 +207,7 @@ export default function PlanningPage() {
       return day;
     });
     await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
-    toast({ title: action === 'done' ? 'Terminal Mühürlendi' : 'Silindi', className: "bg-primary text-white rounded-xl" });
+    toast({ title: action === 'done' ? 'Mühürlendi' : 'Silindi', className: "bg-primary text-white rounded-xl" });
   };
 
   const handleRegeneratePlan = async () => {
@@ -261,7 +260,7 @@ export default function PlanningPage() {
                <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-6 w-6" /></Button>
             </div>
             <div className="space-y-2">
-               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> COMMAND CENTER v50.0</div>
+               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> ACADEMIC TERMINAL v51.0</div>
                <h1 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black tracking-tighter italic text-primary uppercase leading-[0.75] text-shadow-premium break-words">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h1>
             </div>
           </div>
@@ -299,20 +298,21 @@ export default function PlanningPage() {
              { label: 'EKSİK', val: stats.missing, sub: 'KRİTİK YOLLAR', color: 'accent', icon: AlertCircle },
              { label: 'DURUM', val: stats.rate > 70 ? 'STABİL' : 'RİSKLİ', sub: 'AI ANALİZİ', color: 'primary', icon: Brain },
            ].map((item, i) => (
-             <Card key={i} className="relative overflow-hidden p-6 rounded-[2.5rem] border-none bg-white shadow-lg group">
-                <div className={cn("absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl opacity-30 group-hover:opacity-70 transition-opacity", item.color === 'accent' ? 'bg-accent' : 'bg-primary')} />
-                <div className="relative z-10 space-y-4">
-                   <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-lg", item.color === 'accent' ? 'bg-accent' : 'bg-primary')}>
-                      <item.icon className="h-5 w-5" strokeWidth={2.5} />
-                    </div>
-                    <div>
-                       <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1 italic">{item.label}</p>
-                       <p className="text-4xl lg:text-5xl font-black text-primary italic tracking-tighter leading-none">{item.val}</p>
-                       <p className="text-[9px] font-bold uppercase tracking-wider text-primary/30 mt-2">{item.sub}</p>
-                    </div>
-                 </div>
-               </Card>
-             ))}
+             <Card key={i} className="relative overflow-hidden p-6 rounded-[2rem] border-none bg-white shadow-lg group">
+               <div className={cn("absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl opacity-30 group-hover:opacity-70 transition-opacity", item.color === 'accent' ? 'bg-accent' : 'bg-primary')} />
+               <item.icon className={cn("absolute right-4 top-4 h-24 w-24 opacity-[0.04] group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-500 -rotate-12", item.color === 'accent' ? 'text-accent' : 'text-primary')} strokeWidth={1.5} />
+               <div className="relative z-10 space-y-4">
+                  <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-110", item.color === 'accent' ? 'bg-accent' : 'bg-primary')}>
+                     <item.icon className="h-5 w-5" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1 italic">{item.label}</p>
+                     <p className="text-4xl lg:text-5xl font-black text-primary italic tracking-tighter leading-none">{item.val}</p>
+                     <p className="text-[9px] font-bold uppercase tracking-wider text-primary/30 mt-2">{item.sub}</p>
+                  </div>
+               </div>
+             </Card>
+           ))}
         </div>
 
         <div className="space-y-12">
@@ -323,55 +323,53 @@ export default function PlanningPage() {
                   <div className="h-px flex-1 bg-slate-200" />
                   <Badge variant="outline" className="h-10 px-4 rounded-xl font-black uppercase border-2 border-slate-100 text-primary text-[10px]">{day.day}</Badge>
                </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                   {day.blocks?.map((block: any) => {
                     const isDone = block.status === 'done' || block.status === 'completed';
+                    const sourceCount = [block.youtubeUrl, block.mebiUrl, block.customLinkUrl].filter(Boolean).length;
                     return (
                       <Card 
                         key={block.id} 
                         className={cn(
-                          "aspect-square p-0 rounded-[2.5rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-xl",
+                          "aspect-square p-0 rounded-[2.5rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col",
+                          "shadow-[0_15px_40px_-15px_rgba(15,23,42,0.15)] hover:shadow-[0_35px_70px_-20px_rgba(15,23,42,0.28)] hover:-translate-y-2",
                           isDone && "opacity-75"
                         )}
                       >
-                         <div className={cn("h-1.5 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
-                         <div className="flex-1 flex flex-col p-6 sm:p-7 relative z-10">
-                            <div className="flex justify-between items-center">
+                         <div className={cn("h-1.5 w-full shrink-0 transition-all", isDone ? "bg-emerald-500" : "bg-gradient-to-r from-primary via-primary to-accent")} />
+                         <div className="flex-1 flex flex-col p-6 sm:p-7 relative z-10 min-h-0">
+                            <div className="flex justify-between items-center shrink-0">
                                <div className="flex items-center gap-2">
-                                  <div className="px-3 py-1.5 rounded-xl bg-primary/5 text-primary flex items-center gap-1.5 border border-primary/10">
+                                  <div className={cn("px-3 py-1.5 rounded-xl flex items-center gap-1.5 border shadow-sm", isDone ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-primary/[0.04] text-primary border-primary/10")}>
                                      <Clock className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                     <span className="text-[10px] font-black">{block.time}</span>
+                                     <span className="text-[10px] font-black tracking-wider">{block.time}</span>
                                   </div>
                                </div>
-                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-4 py-1.5 rounded-lg text-[8px] font-black shadow-lg border-none transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-[#FF4D6D] text-white")}>
-                                 {isDone ? 'TAMAM' : 'BEK'}
+                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-3.5 py-1.5 rounded-lg text-[8px] font-black shadow-md border-none transition-all uppercase tracking-widest flex items-center gap-1.5", isDone ? "bg-emerald-500 text-white" : "bg-[#FF4D6D] text-white hover:bg-[#ff3557]")}>
+                                 {isDone ? <CheckCircle2 className="h-3 w-3" strokeWidth={3} /> : null} {isDone ? 'TAMAM' : 'BEK'}
                                </button>
                             </div>
-
-                            <div className="flex-1 flex items-center justify-center py-4 overflow-hidden">
-                              <h4 className={cn("text-2xl md:text-5xl font-black italic leading-[1.05] tracking-tighter uppercase text-center break-words line-clamp-3 text-primary", isDone && "opacity-40 line-through")}>
+                            <div className="flex-1 flex items-center justify-center py-4 overflow-hidden px-1">
+                              <h4 className={cn("text-2xl md:text-3xl lg:text-4xl font-black italic leading-[1.05] tracking-tighter uppercase text-center break-words line-clamp-3 transition-colors", isDone ? "text-primary/40 line-through decoration-2" : "text-primary")}>
                                 {block.topic}
                               </h4>
                             </div>
-
-                            <div className="bg-slate-50 rounded-[1.75rem] p-4 space-y-4 border border-slate-100 shadow-inner">
-                               <div className="flex items-center justify-between">
-                                 <span className="text-[7px] font-black text-primary/25 uppercase tracking-[0.3em] italic">KAYNAKLAR</span>
-                                 <div className="flex gap-2">
-                                    {block.youtubeUrl && <a href={block.youtubeUrl} target="_blank" className="h-7 w-7 rounded-lg bg-rose-50 flex items-center justify-center border border-rose-100"><Youtube className="h-3.5 w-3.5 text-rose-500" /></a>}
-                                    {block.mebiUrl && <a href={block.mebiUrl} target="_blank" className="h-7 w-7 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100"><GraduationCap className="h-3.5 w-3.5 text-emerald-500" /></a>}
-                                    {block.customLinkUrl && <a href={block.customLinkUrl} target="_blank" className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/10"><LinkIcon className="h-3.5 w-3.5 text-primary" /></a>}
-                                 </div>
-                               </div>
+                            <div className="shrink-0 bg-gradient-to-br from-slate-50 to-white rounded-[1.75rem] p-3.5 space-y-3 border border-slate-100/80 shadow-inner">
                                <div className="flex gap-2">
-                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-9 rounded-xl bg-primary hover:bg-accent text-white font-black uppercase text-[9px] tracking-widest gap-2 shadow-lg">DÜZENLE <Edit3 className="h-3 w-3 text-accent" /></Button>
-                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-9 w-9 rounded-xl bg-white text-slate-300 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-slate-100 flex items-center justify-center"><Trash2 className="h-4 w-4" /></button>
+                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-9 rounded-xl bg-primary hover:bg-accent text-white font-black uppercase text-[9px] tracking-[0.25em] gap-1.5 shadow-lg group/btn">DÜZENLE <Edit3 className="h-3 w-3 text-accent group-hover/btn:text-white transition-colors" strokeWidth={2.5} /></Button>
+                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-9 w-9 rounded-xl bg-white text-slate-300 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-slate-100 flex items-center justify-center active:scale-95"><Trash2 className="h-4 w-4" strokeWidth={2.5} /></button>
                                </div>
                             </div>
                          </div>
                       </Card>
                     );
                   })}
+                  <button className="aspect-square p-6 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-accent hover:bg-accent/5 transition-all duration-500 group relative overflow-hidden bg-white/50">
+                     <div className="relative z-10 h-16 w-16 rounded-2xl bg-slate-100 group-hover:bg-accent flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-90 shadow-inner">
+                        <Plus className="h-7 w-7 text-primary/30 group-hover:text-primary transition-colors" strokeWidth={3} />
+                     </div>
+                     <p className="relative z-10 text-[11px] font-black uppercase tracking-[0.25em] text-primary/40 group-hover:text-primary transition-colors">GÖREV EKLE</p>
+                  </button>
                </div>
             </div>
           ))}
@@ -381,7 +379,7 @@ export default function PlanningPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="rounded-[4rem] border-none shadow-2xl p-10 bg-white max-w-lg overflow-hidden">
            <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-6 mb-6">
-              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase">GÖREV <span className="text-accent">DÜZENLE</span></DialogTitle>
+              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">GÖREV <span className="text-accent">DÜZENLE</span></DialogTitle>
               <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(false)} className="rounded-full h-10 w-10 bg-slate-50"><X className="h-5 w-5" /></Button>
            </DialogHeader>
            {editingBlock && (
