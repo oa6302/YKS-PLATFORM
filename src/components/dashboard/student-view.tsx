@@ -7,20 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import {
   Loader2,
   Youtube,
-  FileText,
-  BookOpen,
   Zap,
   Clock,
   Calendar,
   Edit3,
   Trash2,
-  CheckCircle2,
   Link as LinkIcon,
-  GraduationCap,
   School,
   Globe,
   Library,
-  ArrowRight,
   ChevronRight,
   Sparkles
 } from 'lucide-react';
@@ -129,7 +124,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
         <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> ACADEMIC COMMAND v62.0
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> ACADEMIC COMMAND v65.0
             </div>
             <h2 className="text-6xl md:text-7xl font-black italic tracking-tighter text-primary uppercase leading-[0.9]">
               Bugünkü <br /><span className="text-accent">Blokların</span>
@@ -157,7 +152,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
               <Card 
                 key={block.id}
                 className={cn(
-                  "min-h-[480px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
+                  "min-h-[500px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
                   isDone && "opacity-60 grayscale-[0.5]"
                 )}
               >
@@ -178,7 +173,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                     </button>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-center sm:text-left">
                     <h4 className={cn(
                       "text-4xl font-black italic tracking-tighter text-primary uppercase leading-[0.95] line-clamp-3 min-h-[110px]",
                       isDone && "line-through opacity-30"
@@ -197,11 +192,11 @@ export function StudentView({ user, userData }: StudentViewProps) {
                       </div>
                       
                       <div className="flex justify-between items-center gap-2">
-                         <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-white text-slate-300 hover:text-rose-500")} title="YouTube"><Youtube className="h-6 w-6" /></a>
-                         <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")} title="MEBİ"><School className="h-6 w-6" /></a>
-                         <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")} title="EBA"><Globe className="h-6 w-6" /></a>
-                         <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")} title="ÖGM Materyal"><Library className="h-6 w-6" /></a>
-                         <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-primary text-white scale-110" : "bg-white text-slate-300 hover:text-primary")} title="Özel Link"><LinkIcon className="h-6 w-6" /></a>
+                         <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.youtubeUrl ? "text-rose-600 scale-110 shadow-rose-200 border-2 border-rose-100" : "text-slate-300 hover:text-rose-600")} title="YouTube"><Youtube className="h-6 w-6" /></a>
+                         <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.mebiUrl ? "text-orange-500 scale-110 shadow-orange-200 border-2 border-orange-100" : "text-slate-300 hover:text-orange-500")} title="MEBİ"><School className="h-6 w-6" /></a>
+                         <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ebaUrl ? "text-blue-500 scale-110 shadow-blue-200 border-2 border-blue-100" : "text-slate-300 hover:text-blue-500")} title="EBA"><Globe className="h-6 w-6" /></a>
+                         <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ogmUrl ? "text-emerald-500 scale-110 shadow-emerald-200 border-2 border-emerald-100" : "text-slate-300 hover:text-emerald-500")} title="ÖGM Materyal"><Library className="h-6 w-6" /></a>
+                         <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.customLinkUrl ? "text-primary scale-110 shadow-primary/20 border-2 border-primary/10" : "text-slate-300 hover:text-primary")} title="Özel Link"><LinkIcon className="h-6 w-6" /></a>
                       </div>
                    </div>
 

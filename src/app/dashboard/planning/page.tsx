@@ -29,7 +29,7 @@ import {
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
 /**
- * MASTER ADAPTIVE PLANNER v64.0
+ * MASTER ADAPTIVE PLANNER v65.0
  * YKS 2026-2027 Döngüsü için otonom müfredat dağıtım motoru.
  */
 const generateAdaptivePlan = (
@@ -215,7 +215,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v64.0</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v65.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -273,11 +273,11 @@ export default function PlanningPage() {
 
                           <div className="bg-[#F8FAFC] rounded-[2.5rem] p-6 space-y-6 shadow-inner border border-white">
                              <div className="flex justify-between gap-2">
-                                <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-white text-slate-300 hover:text-rose-500")}><Youtube className="h-5 w-5" /></a>
-                                <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-white text-slate-300 hover:text-orange-500")}><School className="h-5 w-5" /></a>
-                                <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-white text-slate-300 hover:text-blue-500")}><Globe className="h-5 w-5" /></a>
-                                <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-white text-slate-300 hover:text-emerald-500")}><Library className="h-5 w-5" /></a>
-                                <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-[#0F172A] text-white scale-110" : "bg-white text-slate-300 hover:text-primary")}><LinkIcon className="h-5 w-5" /></a>
+                                <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.youtubeUrl ? "text-rose-600 scale-110 shadow-rose-200 border border-rose-100" : "text-slate-300 hover:text-rose-600")}><Youtube className="h-5 w-5" /></a>
+                                <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.mebiUrl ? "text-orange-500 scale-110 shadow-orange-200 border border-orange-100" : "text-slate-300 hover:text-orange-500")}><School className="h-5 w-5" /></a>
+                                <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ebaUrl ? "text-blue-500 scale-110 shadow-blue-200 border border-blue-100" : "text-slate-300 hover:text-blue-500")}><Globe className="h-5 w-5" /></a>
+                                <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ogmUrl ? "text-emerald-500 scale-110 shadow-emerald-200 border border-emerald-100" : "text-slate-300 hover:text-emerald-500")}><Library className="h-5 w-5" /></a>
+                                <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.customLinkUrl ? "text-primary scale-110 shadow-primary/10 border border-primary/10" : "text-slate-300 hover:text-primary")}><LinkIcon className="h-5 w-5" /></a>
                              </div>
                              <div className="flex gap-2">
                                 <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-10 rounded-xl bg-white border border-slate-100 hover:bg-primary hover:text-white text-primary font-black uppercase text-[8px] gap-2 shadow-sm transition-all"><Edit3 className="h-3 w-3" /> DÜZENLE</Button>
