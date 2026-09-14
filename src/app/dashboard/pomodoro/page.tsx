@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card } from '@/components/ui/card';
@@ -55,7 +56,6 @@ export default function PomodoroPage() {
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [focusGoal, setFocusGoal] = useState('DERİN ODAKLANMA MODU');
   
-  // Dynamic Streams
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStream, setEditingStream] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +67,7 @@ export default function PomodoroPage() {
   }, [db, user]);
 
   const { data: dbStreams = [] } = useCollection<any>(streamsQuery);
-  const streams = dbStreams.length > 0 ? dbStreams : DEFAULT_STREAMS;
+  const streams = useMemo(() => dbStreams.length > 0 ? dbStreams : DEFAULT_STREAMS, [dbStreams]);
 
   const [selectedStream, setSelectedStream] = useState(streams[0]);
 
@@ -81,54 +81,59 @@ export default function PomodoroPage() {
 
   const resetTimer = useCallback(() => {
     setIsActive(false);
-    setMinutes(mode === 'work' ? workMins : breakMins);
+    const targetMins = mode === 'work' ? workMins : breakMins;
+    setMinutes(targetMins);
     setSeconds(0);
   }, [mode, workMins, breakMins]);
 
   useEffect(() => {
     if (!isActive) {
-      setMinutes(mode === 'work' ? workMins : breakMins);
-      setSeconds(0);
+      const targetMins = mode === 'work' ? workMins : breakMins;
+      if (minutes !== targetMins || seconds !== 0) {
+        setMinutes(targetMins);
+        setSeconds(0);
+      }
     }
-  }, [workMins, breakMins, mode, isActive]);
+  }, [workMins, breakMins, mode, isActive, minutes, seconds]);
 
   useEffect(() => {
     let interval: any = null;
     if (isActive) {
       interval = setInterval(() => {
-        if (seconds === 0) {
-          if (minutes === 0) {
-            clearInterval(interval);
-            setIsActive(false);
-            
-            if (mode === 'work') {
-              toast({
-                title: "SEANS TAMAMLANDI",
-                description: "HARİKA İŞ! ŞİMDİ ARA VER.",
-                className: "bg-accent text-primary rounded-[2rem] font-black border-none shadow-[0_40px_80px_-20px_rgba(245,158,11,0.4)]"
-              });
-              setMode('break');
+        setSeconds(prevSeconds => {
+          if (prevSeconds === 0) {
+            if (minutes === 0) {
+              clearInterval(interval);
+              setIsActive(false);
+              if (mode === 'work') {
+                toast({
+                  title: "SEANS TAMAMLANDI",
+                  description: "HARİKA İŞ! ŞİMDİ ARA VER.",
+                  className: "bg-accent text-primary rounded-[2rem] font-black border-none shadow-2xl"
+                });
+                setMode('break');
+              } else {
+                toast({
+                  title: "MOLA BİTTİ",
+                  description: "ZİHİN TAZELEME TAMAMLANDI. DERSE BAŞLA!",
+                  className: "bg-primary text-white rounded-[2rem] font-black border-none shadow-2xl"
+                });
+                setMode('work');
+              }
+              return 0;
             } else {
-              toast({
-                title: "MOLA BİTTİ",
-                description: "ZİHİN TAZELEME TAMAMLANDI. DERSE BAŞLA!",
-                className: "bg-primary text-white rounded-[2rem] font-black border-none shadow-[0_40px_80px_-20px_rgba(15,23,42,0.4)]"
-              });
-              setMode('work');
+              setMinutes(m => m - 1);
+              return 59;
             }
-          } else {
-            setMinutes(prev => prev - 1);
-            setSeconds(59);
           }
-        } else {
-          setSeconds(prev => prev - 1);
-        }
+          return prevSeconds - 1;
+        });
       }, 1000);
     } else {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isActive, minutes, seconds, mode, toast]);
+  }, [isActive, minutes, mode, toast]);
 
   const handleStreamSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -185,7 +190,7 @@ export default function PomodoroPage() {
           </div>
           <div className="space-y-0.5">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-[0.3em] shadow-lg shadow-accent/20 italic border border-accent/20">
-                <Clock className="h-3 w-3" /> ODAKLANMA MOTORU V66.0
+                <Clock className="h-3 w-3" /> ODAKLANMA MOTORU V67.0
              </div>
              <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic text-primary uppercase leading-tight text-shadow-premium">
                 POMODORO <br /><span className="text-accent text-shadow-accent">TERMİNALİ</span>
@@ -207,17 +212,16 @@ export default function PomodoroPage() {
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 items-start">
-        {/* Ana Timer Kartı */}
         <Card className="xl:col-span-7 p-10 md:p-16 rounded-[4.5rem] border-none shadow-[0_80px_160px_-40px_rgba(15,23,42,0.15)] bg-white text-center space-y-12 relative overflow-hidden group">
            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-accent/10 transition-all duration-1000" />
            
            <div className="flex justify-center gap-4 relative z-10">
               <button 
-                onClick={() => {setMode('work'); resetTimer();}}
+                onClick={() => {setMode('work'); setIsActive(false);}}
                 className={cn("px-8 md:px-12 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-500", mode === 'work' ? 'bg-[#0F172A] text-white shadow-2xl scale-105' : 'bg-slate-50 text-muted-foreground opacity-30 hover:opacity-100')}
               >ÇALIŞMA</button>
               <button 
-                onClick={() => {setMode('break'); resetTimer();}}
+                onClick={() => {setMode('break'); setIsActive(false);}}
                 className={cn("px-8 md:px-12 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.4em] transition-all duration-500", mode === 'break' ? 'bg-accent text-primary shadow-2xl scale-105' : 'bg-slate-50 text-muted-foreground opacity-30 hover:opacity-100')}
               >KISA MOLA</button>
            </div>
@@ -226,7 +230,7 @@ export default function PomodoroPage() {
               <p className="text-[8rem] sm:text-[10rem] md:text-[12rem] font-black italic tracking-tighter text-[#0F172A] leading-none text-shadow-premium">
                  {String(minutes).padStart(2, '0')}
               </p>
-              <div className="flex flex-col gap-3 py-6 px-3 bg-accent rounded-full shadow-[0_20px_40px_-10px_rgba(245,158,11,0.5)] shrink-0">
+              <div className="flex flex-col gap-3 py-6 px-3 bg-accent rounded-full shadow-2xl shrink-0">
                  <div className="h-4 w-4 rounded-full bg-[#0F172A]" />
                  <div className="h-4 w-4 rounded-full bg-[#0F172A]" />
               </div>
@@ -247,7 +251,7 @@ export default function PomodoroPage() {
               <Button 
                 onClick={toggleTimer}
                 className={cn(
-                  "h-24 w-24 md:h-32 md:w-32 rounded-full shadow-[0_40px_80px_-20px_rgba(15,23,42,0.4)] transition-all duration-500 hover:scale-110 active:scale-95 group/play", 
+                  "h-24 w-24 md:h-32 md:w-32 rounded-full shadow-2xl transition-all duration-500 hover:scale-110 active:scale-95 group/play", 
                   isActive ? 'bg-slate-100 text-primary' : 'bg-[#0F172A] text-white'
                 )}
               >
@@ -263,9 +267,7 @@ export default function PomodoroPage() {
            </div>
         </Card>
 
-        {/* Sağ Panel */}
         <div className="xl:col-span-5 space-y-10">
-           {/* Ayarlar Terminali */}
            <Card className="p-8 md:p-10 rounded-[3.5rem] border-none shadow-lg bg-white space-y-10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-40 h-40 bg-slate-50 rounded-full translate-x-1/2 -translate-y-1/2" />
               <div className="flex items-center gap-5 relative z-10">
@@ -293,7 +295,11 @@ export default function PomodoroPage() {
                        <Input 
                          type="number" 
                          value={workMins} 
-                         onChange={(e) => setWorkMinutes(Number(e.target.value))}
+                         onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setWorkMinutes(val);
+                            if(!isActive && mode === 'work') setMinutes(val);
+                         }}
                          className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner pl-14 font-black text-3xl text-primary focus-visible:ring-accent transition-all" 
                        />
                     </div>
@@ -305,27 +311,18 @@ export default function PomodoroPage() {
                        <Input 
                          type="number" 
                          value={breakMins} 
-                         onChange={(e) => setBreakMinutes(Number(e.target.value))}
+                         onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setBreakMinutes(val);
+                            if(!isActive && mode === 'break') setMinutes(val);
+                         }}
                          className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner pl-14 font-black text-3xl text-primary focus-visible:ring-accent transition-all" 
                        />
                     </div>
                  </div>
               </div>
-
-              <div className="p-8 bg-slate-50/50 rounded-[2.5rem] border border-slate-100 flex items-center justify-between shadow-inner relative overflow-hidden group/target">
-                 <div className="absolute inset-0 bg-white opacity-0 group-hover/target:opacity-100 transition-opacity" />
-                 <div className="flex items-center gap-5 relative z-10">
-                    <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-md border border-slate-50"><Target className="h-6 w-6 text-accent" /></div>
-                    <div>
-                       <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-0.5 italic">GÜNLÜK HEDEF</p>
-                       <p className="text-xl font-black text-primary italic tracking-tighter uppercase leading-none">12 SEANS / 300 XP</p>
-                    </div>
-                 </div>
-                 <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-slate-50 font-black text-xs text-primary relative z-10">75%</div>
-              </div>
            </Card>
 
-           {/* Müzik Terminali */}
            {showMusic && (
               <Card className="p-8 md:p-10 rounded-[4rem] border-none shadow-3xl bg-[#0F172A] text-white space-y-8 animate-in slide-in-from-right-8 duration-700 relative overflow-hidden">
                  <div className="absolute bottom-0 right-0 w-64 h-64 bg-accent/10 blur-[100px] rounded-full translate-x-1/2 translate-y-1/2" />
@@ -377,7 +374,6 @@ export default function PomodoroPage() {
                              <span className="text-[9px] font-black uppercase tracking-widest line-clamp-2 italic">{stream.title}</span>
                           </button>
                           
-                          {/* Stream Actions */}
                           {!stream.id.startsWith('def') && (
                             <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover/btn-container:opacity-100 transition-opacity z-20">
                                <Button 
@@ -404,7 +400,6 @@ export default function PomodoroPage() {
         </div>
       </div>
 
-      {/* Stream Management Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="rounded-[4rem] border-none shadow-2xl p-12 bg-white max-w-lg overflow-hidden">
            <DialogHeader className="space-y-4">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc, useFirestore } from '@/firebase';
@@ -15,11 +16,9 @@ import {
   Clock,
   Menu,
   X,
-  Sparkles,
   Brain,
   Compass,
   MessageSquare,
-  Zap,
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -90,7 +89,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row relative overflow-hidden">
-      {/* Sidebar v66 */}
+      {/* Sidebar v67 */}
       <aside className={cn(
         "w-[300px] bg-[#0F172A] text-white flex flex-col fixed md:sticky inset-y-0 left-0 z-[100] transition-transform duration-500 md:translate-x-0 h-screen shadow-[10px_0_60px_rgba(0,0,0,0.3)]",
         sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -99,9 +98,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="text-3xl font-black italic tracking-tighter text-white uppercase leading-none">
             DEK <span className="text-accent">AI</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="md:hidden text-white hover:bg-white/10">
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-white hover:bg-white/10 p-2 rounded-xl">
             <X className="h-6 w-6" />
-          </Button>
+          </button>
         </div>
         
         <ScrollArea className="flex-1 px-6">
@@ -129,21 +128,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </nav>
         </ScrollArea>
 
-        <div className="p-8">
-           <div className="bg-white/5 backdrop-blur-xl rounded-[2rem] p-6 space-y-4 border border-white/5 relative overflow-hidden group/sys">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover/sys:bg-accent/10 transition-all" />
-              <div className="flex items-center gap-3 relative z-10">
-                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
-                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">SİSTEM AKTİF</span>
-              </div>
-              <p className="text-[11px] font-bold text-white/60 italic leading-relaxed relative z-10">YKS Sözel Master v66.0 terminale bağlı.</p>
-           </div>
-        </div>
+        {/* Status card removed per user request */}
+        <div className="p-8 h-8" />
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Header */}
         <header className="md:hidden h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-50 shrink-0">
           <div className="text-xl font-black italic tracking-tighter text-primary uppercase leading-none">
             DEK <span className="text-accent">AI</span>
