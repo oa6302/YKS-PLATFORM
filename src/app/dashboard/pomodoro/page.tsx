@@ -185,7 +185,7 @@ export default function PomodoroPage() {
           </div>
           <div className="space-y-0.5">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent text-primary font-black text-[9px] uppercase tracking-[0.3em] shadow-lg shadow-accent/20 italic border border-accent/20">
-                <Clock className="h-3 w-3" /> FOCUS ENGINE V4.8
+                <Clock className="h-3 w-3" /> ODAKLANMA MOTORU V66.0
              </div>
              <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic text-primary uppercase leading-tight text-shadow-premium">
                 POMODORO <br /><span className="text-accent text-shadow-accent">TERMİNALİ</span>
@@ -332,7 +332,7 @@ export default function PomodoroPage() {
                  <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-4">
                        <Headphones className="h-7 w-7 text-accent animate-pulse" />
-                       <h4 className="text-xl font-black italic tracking-[0.3em] uppercase">SONIC FOCUS</h4>
+                       <h4 className="text-xl font-black italic tracking-[0.3em] uppercase">SESSEL ODAK</h4>
                     </div>
                     <Button 
                       size="icon" variant="ghost" 
@@ -409,7 +409,7 @@ export default function PomodoroPage() {
         <DialogContent className="rounded-[4rem] border-none shadow-2xl p-12 bg-white max-w-lg overflow-hidden">
            <DialogHeader className="space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic shadow-sm w-fit">
-                <Music className="h-3 w-3 text-accent" /> SONIC EDİTÖR
+                <Music className="h-3 w-3 text-accent" /> SESSEL EDİTÖR
               </div>
               <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">
                 {editingStream ? 'KANALI DÜZENLE' : 'YENİ KANAL EKLE'}
@@ -420,10 +420,10 @@ export default function PomodoroPage() {
            <form onSubmit={handleStreamSubmit} className="space-y-8 pt-8">
               <div className="space-y-3">
                  <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4 italic">KANAL BAŞLIĞI</Label>
-                 <Input name="title" required defaultValue={editingStream?.title} placeholder="Örn: DEEP WORK FREQUENCY" className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-bold" />
+                 <Input name="title" required defaultValue={editingStream?.title} placeholder="Örn: DERİN ÇALIŞMA FREKANSI" className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-bold" />
               </div>
               <div className="space-y-3">
-                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4 italic">YOUTUBE VIDEO ID</Label>
+                 <Label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4 italic">YOUTUBE VİDEO ID</Label>
                  <Input name="videoId" required defaultValue={editingStream?.videoId} placeholder="Örn: WPni755-Krg" className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-bold font-mono" />
                  <p className="text-[8px] font-bold text-muted-foreground ml-4 opacity-40 italic">Linkteki "v=" kısmından sonraki 11 karakter.</p>
               </div>

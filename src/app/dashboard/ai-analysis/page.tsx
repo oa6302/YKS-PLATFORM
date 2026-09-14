@@ -63,7 +63,7 @@ export default function AiAnalysisPage() {
           <Brain className="absolute inset-0 m-auto h-10 w-10 text-accent animate-pulse" />
         </div>
         <div className="text-center space-y-2">
-          <p className="text-2xl font-black text-primary uppercase tracking-tighter italic">AI MENTOR TERMİNALİ</p>
+          <p className="text-2xl font-black text-primary uppercase tracking-tighter italic">AI REHBER TERMİNALİ</p>
           <p className="text-sm text-muted-foreground font-medium italic animate-pulse">Nöronlar senkronize ediliyor...</p>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function AiAnalysisPage() {
           </div>
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic">
-              <Sparkles className="h-3.5 w-3.5" /> NEURAL ENGINE v4.8
+              <Sparkles className="h-3.5 w-3.5" /> SİNİRSEL ANALİZ MOTORU v66.0
             </div>
             <h2 className="text-6xl font-black tracking-tighter italic text-primary uppercase leading-none text-shadow-deep">
               AI Koç <br /><span className="text-accent text-shadow-accent">Terminali</span>
@@ -144,7 +144,7 @@ export default function AiAnalysisPage() {
                 <Zap className="h-16 w-16 text-accent animate-pulse" />
               </div>
               <div className="space-y-6 text-center lg:text-left">
-                <h3 className="text-2xl font-black italic tracking-[0.2em] text-accent/60 uppercase">MENTOR CEVABI</h3>
+                <h3 className="text-2xl font-black italic tracking-[0.2em] text-accent/60 uppercase">KOÇUN CEVABI</h3>
                 <p className="text-[2.2rem] leading-[1.1] font-black italic tracking-tight text-shadow-premium">
                   "{insights.summary}"
                 </p>
@@ -185,7 +185,7 @@ export default function AiAnalysisPage() {
                           "text-[9px] font-black uppercase tracking-widest",
                           item.priority === 'high' ? 'text-destructive' : item.priority === 'medium' ? 'text-accent' : 'text-primary'
                         )}>
-                          {item.priority} Önem
+                          {item.priority === 'high' ? 'YÜKSEK' : item.priority === 'medium' ? 'ORTA' : 'DÜŞÜK'} Önem
                         </span>
                       </div>
                       <h4 className="font-black text-2xl italic tracking-tighter text-primary leading-none text-shadow-deep uppercase">{item.title}</h4>
@@ -234,7 +234,7 @@ export default function AiAnalysisPage() {
                    <p className="text-6xl font-black text-primary italic text-shadow-deep group-hover:text-accent tracking-tighter">%94</p>
                 </div>
                 <div className="bg-white p-12 rounded-[3.5rem] border border-primary/5 shadow-2xl space-y-3 group hover:bg-accent transition-all duration-500">
-                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground group-hover:text-primary/40 italic">VERİ KALİTESİ</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-primary/40 italic">VERİ KALİTESİ</p>
                    <p className="text-6xl font-black text-accent italic text-shadow-deep group-hover:text-primary tracking-tighter">A+</p>
                 </div>
               </div>

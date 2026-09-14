@@ -29,8 +29,7 @@ import {
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
 /**
- * MASTER ADAPTIVE PLANNER v65.0
- * YKS 2026-2027 Döngüsü için otonom müfredat dağıtım motoru.
+ * MASTER ADAPTIVE PLANNER v66.0
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -97,7 +96,6 @@ const generateAdaptivePlan = (
       };
     };
 
-    // Stratejik Blok Dağıtımı
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
@@ -215,7 +213,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v65.0</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v66.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -251,7 +249,7 @@ export default function PlanningPage() {
                     <Card 
                       key={block.id} 
                       className={cn(
-                        "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-lg hover:-translate-y-2 hover:shadow-2xl",
+                        "min-h-[500px] p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-lg hover:-translate-y-2 hover:shadow-2xl",
                         isDone && "opacity-60"
                       )}
                     >

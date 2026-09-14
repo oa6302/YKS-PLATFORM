@@ -124,7 +124,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
         <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> ACADEMIC COMMAND v65.0
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> AKADEMİK KOMUTA v66.0
             </div>
             <h2 className="text-6xl md:text-7xl font-black italic tracking-tighter text-primary uppercase leading-[0.9]">
               Bugünkü <br /><span className="text-accent">Blokların</span>
@@ -229,7 +229,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                <Zap className="h-16 w-16 text-slate-100 group-hover:text-accent transition-colors" strokeWidth={3} />
                <div className="text-center space-y-3">
                   <p className="text-4xl font-black uppercase tracking-[0.3em] text-slate-100 group-hover:text-primary transition-colors italic">Sistem Boşta</p>
-                  <p className="text-[10px] font-bold text-slate-200 uppercase tracking-widest italic">TERMINALİ ÇALIŞTIRMAK İÇİN DOKUNUN</p>
+                  <p className="text-[10px] font-bold text-slate-200 uppercase tracking-widest italic">TERMİNALİ ÇALIŞTIRMAK İÇİN DOKUNUN</p>
                </div>
             </Card>
           )}

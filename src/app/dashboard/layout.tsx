@@ -75,22 +75,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [db, user, userData, studyPlan, docLoading, planLoading]);
 
   const navItems = [
-    { id: 'dashboard', label: 'DASHBOARD', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'dashboard', label: 'ANA KONTROL', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'planning', label: 'AKADEMİK TERMİNAL', icon: Calendar, path: '/dashboard/planning' },
     { id: 'analysis', label: 'AI ANALİZ', icon: Brain, path: '/dashboard/ai-analysis' },
     { id: 'topics', label: 'MÜFREDAT RADARI', icon: BookOpen, path: '/dashboard/topics' },
-    { id: 'test-analysis', label: 'DATA LAB', icon: BarChart3, path: '/dashboard/test-analysis' },
+    { id: 'test-analysis', label: 'VERİ ANALİZ LAB', icon: BarChart3, path: '/dashboard/test-analysis' },
     { id: 'deneme-analysis', label: 'ŞAMPİYONLUK', icon: Trophy, path: '/dashboard/deneme-analysis' },
     { id: 'discover', label: 'UZMAN KEŞFET', icon: Compass, path: '/dashboard/discover' },
     { id: 'messages', label: 'MESAJLAR', icon: MessageSquare, path: '/dashboard/messages' },
     { id: 'links', label: 'AKADEMİK KASA', icon: LinkIcon, path: '/dashboard/links' },
     { id: 'awards', label: 'KUPA ODASI', icon: Award, path: '/dashboard/awards' },
-    { id: 'pomodoro', label: 'FOKUS MODU', icon: Clock, path: '/dashboard/pomodoro' },
+    { id: 'pomodoro', label: 'ODAK MODU', icon: Clock, path: '/dashboard/pomodoro' },
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row relative overflow-hidden">
-      {/* Sidebar v64 - Görseldeki Tasarım */}
+      {/* Sidebar v66 */}
       <aside className={cn(
         "w-[300px] bg-[#0F172A] text-white flex flex-col fixed md:sticky inset-y-0 left-0 z-[100] transition-transform duration-500 md:translate-x-0 h-screen shadow-[10px_0_60px_rgba(0,0,0,0.3)]",
         sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -134,9 +134,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover/sys:bg-accent/10 transition-all" />
               <div className="flex items-center gap-3 relative z-10">
                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
-                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">SYSTEM ONLINE</span>
+                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/40">SİSTEM AKTİF</span>
               </div>
-              <p className="text-[11px] font-bold text-white/60 italic leading-relaxed relative z-10">YKS Sözel Master v64.0 terminale bağlı.</p>
+              <p className="text-[11px] font-bold text-white/60 italic leading-relaxed relative z-10">YKS Sözel Master v66.0 terminale bağlı.</p>
            </div>
         </div>
       </aside>
@@ -144,7 +144,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-[50] shrink-0">
+        <header className="md:hidden h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-50 shrink-0">
           <div className="text-xl font-black italic tracking-tighter text-primary uppercase leading-none">
             DEK <span className="text-accent">AI</span>
           </div>
