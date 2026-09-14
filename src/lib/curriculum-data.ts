@@ -1,7 +1,7 @@
 /**
  * @fileOverview YKS TM (Eşit Ağırlık) - Sözel Odaklı Müfredat Verisi
  * Dil Bilgisi ve Geometri tamamen çıkarılmıştır.
- * TYT Matematik (Cebir & Problemler) eklendi.
+ * TYT Matematik (Cebir & Problemler) dahil edildi.
  */
 
 export const TYT_MATEMATIK = [

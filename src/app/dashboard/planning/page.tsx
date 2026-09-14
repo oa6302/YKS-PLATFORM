@@ -29,11 +29,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
-/**
- * @fileOverview YKS TM Sözel Master - Planning Page
- * v39 Ultra Modern Design & Omni-Sync Logic
- */
-
 const generateAdaptivePlan = (
   startDateStr: string,
   endDateStr: string,
@@ -41,7 +36,7 @@ const generateAdaptivePlan = (
   existingPlan: any[] = []
 ) => {
   const startDate = parseISO(startDateStr);
-  const aytDate = parseISO('2024-12-01'); // 2024 için güncellendi
+  const aytDate = parseISO('2024-12-01'); 
   const endDate = parseISO(endDateStr);
   const daysInterval = differenceInDays(endDate, startDate);
 
@@ -79,7 +74,7 @@ const generateAdaptivePlan = (
 
     const getProtectedBlock = (time: string, defaultData: any) => {
       const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      // DATA SHIELD: Protect completed or manually modified blocks
+      // DATA SHIELD: Protect completed, manually edited, or link-containing blocks
       if (existing && (
         existing.status === 'done' || 
         existing.isManuallyEdited || 
@@ -100,7 +95,7 @@ const generateAdaptivePlan = (
       };
     };
 
-    // 10:00 - Ana Branş
+    // 10:00 - Main Subject (AYT after Dec 1)
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
@@ -110,7 +105,7 @@ const generateAdaptivePlan = (
       examType: isAytStarted ? 'AYT' : 'TYT'
     }));
 
-    // 11:00 - İkinci Branş
+    // 11:00 - Secondary Subject (Always TYT)
     const p2Lessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = p2Lessons[(i + 2) % p2Lessons.length];
     dailyBlocks.push(getProtectedBlock('11:00', {
@@ -119,14 +114,14 @@ const generateAdaptivePlan = (
       examType: 'TYT'
     }));
 
-    // 12:00 - Stratejik Tekrar
+    // 12:00 - Strategic Review
     dailyBlocks.push(getProtectedBlock('12:00', {
       lesson: 'STRATEJİK TEKRAR',
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
       examType: 'GENEL'
     }));
 
-    // 15:00 - Paragraf
+    // 15:00 - Paragraph
     dailyBlocks.push(getProtectedBlock('15:00', {
       lesson: 'TYT TÜRKÇE',
       topic: '20 ADET PARAGRAF KONDİSYONU',
@@ -169,7 +164,7 @@ export default function PlanningPage() {
 
   const stats = useMemo(() => {
     if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, missing: 0, rate: 0 };
-    const total = studyPlan.masterPlan.length * 4;
+    const total = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.length || 0), 0);
     const done = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.filter((b: any) => b.status === 'done').length || 0), 0);
     return { planned: total, completed: done, missing: total - done, rate: Math.round((done / (total || 1)) * 100) };
   }, [studyPlan]);
@@ -195,7 +190,7 @@ export default function PlanningPage() {
     toast({ title: action === 'done' ? 'Mühürlendi' : 'Silindi' });
   };
 
-  const handleRegeneratePlan = async () => {
+  const handleCreateProgram = async () => {
     if (!db || !user || !userData) return;
     setIsRegenerating(true);
     try {
@@ -208,9 +203,9 @@ export default function PlanningPage() {
         updatedAt: serverTimestamp()
       }, { merge: true });
       toast({ 
-        title: "DİNAMİK SENKRONİZASYON TAMAMLANDI", 
-        description: "Verileriniz korundu, takvim güncellendi.",
-        className: "bg-[#0F172A] text-white border-accent/20 rounded-2xl"
+        title: "PROGRAM OLUŞTURULDU", 
+        description: "Tüm tarihler tarandı, verileriniz korundu.",
+        className: "bg-primary text-white rounded-2xl shadow-2xl"
       });
     } catch (e) {
       console.error(e);
@@ -222,7 +217,7 @@ export default function PlanningPage() {
 
   return (
     <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
-      <div className="mx-auto w-full max-w-[1400px] px-6 py-12 space-y-12">
+      <div className="mx-auto w-full max-w-[1700px] px-4 py-8 md:px-10 space-y-12">
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
           <div className="space-y-4">
              <div className="flex items-center gap-4">
@@ -230,97 +225,95 @@ export default function PlanningPage() {
                 <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
              </div>
              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic"><Calendar className="h-3.5 w-3.5" /> TERMINAL 39.0</div>
-                <h2 className="text-6xl font-bold tracking-tighter text-[#0F172A] uppercase leading-none">Akademik <br /><span className="text-accent">Planlama</span></h2>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> TERMINAL 39.0</div>
+                <h2 className="text-6xl font-black tracking-tighter text-primary italic uppercase leading-none">Akademik <br /><span className="text-accent">Planlama</span></h2>
              </div>
           </div>
 
-          <div className="flex flex-col gap-4 w-full lg:w-auto">
-             <div className="flex flex-wrap gap-4 items-end bg-white p-6 rounded-[2.5rem] shadow-xl border border-primary/5">
-                <div className="space-y-2">
-                   <Label className="text-[9px] font-black uppercase opacity-40 ml-2 italic">BAŞLANGIÇ</Label>
-                   <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
-                </div>
-                <div className="space-y-2">
-                   <Label className="text-[9px] font-black uppercase opacity-40 ml-2 italic">BİTİŞ</Label>
-                   <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 rounded-xl bg-slate-50 border-none font-bold" />
-                </div>
-                <Button onClick={handleRegeneratePlan} disabled={isRegenerating} className="h-12 px-8 rounded-xl bg-[#0F172A] hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-2xl transition-all">
-                   {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-accent" />} RAPORU ÇALIŞTIR
-                </Button>
+          <div className="flex flex-col md:flex-row items-end gap-6 bg-white p-8 rounded-[3rem] shadow-xl border border-primary/5 w-full lg:w-auto">
+             <div className="space-y-2 w-full md:w-auto">
+                <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BAŞLANGIÇ</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none font-bold text-sm" />
              </div>
+             <div className="space-y-2 w-full md:w-auto">
+                <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">BİTİŞ</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-none font-bold text-sm" />
+             </div>
+             <Button onClick={handleCreateProgram} disabled={isRegenerating} className="h-14 px-10 rounded-2xl bg-primary hover:bg-accent text-white font-black text-xs uppercase tracking-widest gap-4 shadow-2xl transition-all w-full md:w-auto">
+                {isRegenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-accent" />} PROGRAMI OLUŞTUR
+             </Button>
           </div>
         </header>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {/* Dashboard Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
            {[
-             { label: 'TAMAMLANAN', val: `%${stats.rate}`, icon: CheckCircle2 },
-             { label: 'AKTİF GÖREV', val: stats.planned, icon: Target },
-             { label: 'KALAN', val: stats.missing, icon: AlertCircle },
-             { label: 'STRATEJİ', val: stats.rate > 70 ? 'STABİL' : 'DÜŞÜK', icon: Brain },
+             { label: 'TAMAMLANMA ORANI', val: `%${stats.rate}`, icon: CheckCircle2, color: 'text-emerald-500' },
+             { label: 'TOPLAM GÖREV', val: stats.planned, icon: Target, color: 'text-primary' },
+             { label: 'BEKLEYEN', val: stats.missing, icon: AlertCircle, color: 'text-accent' },
+             { label: 'MÜFREDAT MODU', val: 'TM SÖZEL+', icon: Brain, color: 'text-indigo-500' },
            ].map((item, i) => (
-             <Card key={i} className="p-8 rounded-[2.5rem] border-none bg-white shadow-lg border border-primary/5 group">
-                <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-accent transition-all">
-                   <item.icon className="h-6 w-6 text-primary group-hover:text-white" />
+             <Card key={i} className="p-10 rounded-[3.5rem] border-none bg-white shadow-xl group hover:scale-[1.02] transition-all">
+                <div className="h-16 w-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center mb-6 group-hover:bg-primary transition-all">
+                   <item.icon className={cn("h-8 w-8 transition-colors group-hover:text-white", item.color)} />
                 </div>
-                <p className="text-[9px] font-black uppercase text-muted-foreground mb-1 tracking-widest">{item.label}</p>
-                <p className="text-4xl font-bold text-primary tracking-tighter leading-none">{item.val}</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-[0.2em] italic">{item.label}</p>
+                <p className="text-5xl font-black text-primary italic tracking-tighter leading-none">{item.val}</p>
              </Card>
            ))}
         </div>
 
-        {/* Timeline */}
-        <div className="space-y-16">
+        {/* Timeline Content */}
+        <div className="space-y-20">
           {filteredPlan.map((day: any) => (
-            <div key={day.date} className="space-y-8">
-               <div className="flex items-center gap-6 px-4">
-                  <h3 className="text-3xl font-bold text-[#0F172A] uppercase tracking-tighter">{format(parseISO(day.date), 'd MMMM yyyy', { locale: tr })}</h3>
+            <div key={day.date} className="space-y-10">
+               <div className="flex items-center gap-6 px-6">
+                  <h3 className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">{format(parseISO(day.date), 'd MMMM yyyy', { locale: tr })}</h3>
                   <div className="h-px flex-1 bg-slate-200" />
-                  <Badge className="bg-slate-100 text-primary font-black uppercase text-[10px] py-2 px-4 rounded-xl">{day.day}</Badge>
+                  <Badge className="bg-slate-100 text-primary font-black uppercase text-[10px] py-2 px-6 rounded-2xl border-none">{day.day}</Badge>
                </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
                   {day.blocks?.map((block: any) => {
                     const isDone = block.status === 'done';
                     return (
                       <Card 
                         key={block.id} 
                         className={cn(
-                          "p-0 rounded-[3rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-xl hover:-translate-y-2",
+                          "p-0 rounded-[4rem] border-none transition-all duration-500 group relative overflow-hidden bg-white flex flex-col shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-3",
                           isDone && "opacity-60"
                         )}
                       >
-                         <div className={cn("h-1.5 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
-                         <div className="p-8 space-y-6 flex-1 flex flex-col">
+                         <div className={cn("h-2 w-full", isDone ? "bg-emerald-500" : "bg-primary")} />
+                         <div className="p-10 space-y-8 flex-1 flex flex-col">
                             <div className="flex justify-between items-center">
-                               <div className="px-3 py-1.5 rounded-xl bg-slate-50 text-[10px] font-black text-primary/40 border border-slate-100">{block.time}</div>
-                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-4 py-1.5 rounded-xl text-[9px] font-black shadow-md transition-all uppercase", isDone ? "bg-emerald-500 text-white" : "bg-[#FF4D6D] text-white hover:bg-accent")}>
-                                 {isDone ? 'TAMAMLANDI' : 'BEKLİYOR'}
+                               <div className="px-4 py-2 rounded-xl bg-slate-50 text-[10px] font-black text-primary/40 border border-slate-100 italic">{block.time}</div>
+                               <button onClick={() => handleTaskAction(block.id, day.date, 'done')} className={cn("px-5 py-2 rounded-xl text-[9px] font-black shadow-lg transition-all uppercase tracking-widest", isDone ? "bg-emerald-500 text-white" : "bg-primary text-white hover:bg-accent")}>
+                                 {isDone ? 'TAMAMLANDI' : 'MÜHÜRLE'}
                                </button>
                             </div>
-                            <div className="flex-1 flex items-center justify-center py-6 min-h-[120px]">
-                              <h4 className={cn("text-2xl font-bold text-center uppercase tracking-tight leading-tight", isDone ? "text-slate-300 line-through" : "text-[#0F172A]")}>
+                            <div className="flex-1 flex items-center justify-center py-6 min-h-[140px]">
+                              <h4 className={cn("text-3xl font-black text-center uppercase tracking-tight leading-[0.9] italic", isDone ? "text-slate-300 line-through" : "text-primary")}>
                                 {block.topic}
                               </h4>
                             </div>
-                            <div className="bg-[#F8FAFC] rounded-[2rem] p-5 space-y-5 shadow-inner">
+                            <div className="bg-[#F8FAFC] rounded-[3rem] p-8 space-y-6 shadow-inner border border-white">
                                <div className="flex justify-center gap-4">
-                                  {block.youtubeUrl && <a href={block.youtubeUrl} target="_blank" className="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center hover:scale-110 transition-all shadow-sm"><Youtube className="h-5 w-5 text-rose-500" /></a>}
-                                  {block.mebiUrl && <a href={block.mebiUrl} target="_blank" className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center hover:scale-110 transition-all shadow-sm"><GraduationCap className="h-5 w-5 text-orange-500" /></a>}
-                                  {block.ebaUrl && <a href={block.ebaUrl} target="_blank" className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center hover:scale-110 transition-all shadow-sm"><School className="h-5 w-5 text-blue-500" /></a>}
-                                  {block.ogmUrl && <a href={block.ogmUrl} target="_blank" className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center hover:scale-110 transition-all shadow-sm"><BookOpen className="h-5 w-5 text-emerald-500" /></a>}
-                                  {block.customLinkUrl && <a href={block.customLinkUrl} target="_blank" className="h-10 w-10 rounded-xl bg-slate-200 flex items-center justify-center hover:scale-110 transition-all shadow-sm"><LinkIcon className="h-5 w-5 text-primary" /></a>}
+                                  <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-md", block.youtubeUrl ? "bg-rose-500 text-white scale-110" : "bg-slate-100 text-slate-300 hover:text-rose-500")}><Youtube className="h-6 w-6" /></a>
+                                  <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-md", block.mebiUrl ? "bg-orange-500 text-white scale-110" : "bg-slate-100 text-slate-300 hover:text-orange-500")}><GraduationCap className="h-6 w-6" /></a>
+                                  <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-md", block.ebaUrl ? "bg-blue-500 text-white scale-110" : "bg-slate-100 text-slate-300 hover:text-blue-500")}><School className="h-6 w-6" /></a>
+                                  <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-md", block.ogmUrl ? "bg-emerald-500 text-white scale-110" : "bg-slate-100 text-slate-300 hover:text-emerald-500")}><BookOpen className="h-6 w-6" /></a>
+                                  <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all shadow-md", block.customLinkUrl ? "bg-[#0F172A] text-white scale-110" : "bg-slate-100 text-slate-300 hover:text-primary")}><LinkIcon className="h-6 w-6" /></a>
                                </div>
                                <div className="flex gap-2">
-                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-10 rounded-xl bg-white border border-slate-100 hover:bg-primary hover:text-white text-primary font-black uppercase text-[9px] gap-2 shadow-sm transition-all"><Edit3 className="h-4 w-4" /> DÜZENLE</Button>
-                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-10 w-10 rounded-xl bg-white text-slate-200 hover:bg-destructive hover:text-white transition-all flex items-center justify-center border border-slate-100 shadow-sm"><Trash2 className="h-4 w-4" /></button>
+                                  <Button onClick={() => { setEditingBlock({...block, date: day.date}); setIsEditDialogOpen(true); }} className="flex-1 h-12 rounded-2xl bg-white border border-slate-100 hover:bg-primary hover:text-white text-primary font-black uppercase text-[9px] gap-2 shadow-sm transition-all"><Edit3 className="h-4 w-4" /> DÜZENLE</Button>
+                                  <button onClick={() => handleTaskAction(block.id, day.date, 'delete')} className="h-12 w-12 rounded-2xl bg-white text-slate-200 hover:bg-destructive hover:text-white transition-all flex items-center justify-center border border-slate-100 shadow-sm"><Trash2 className="h-5 w-5" /></button>
                                </div>
                             </div>
                          </div>
                       </Card>
                     );
                   })}
-                  <button className="min-h-[280px] rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-4 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
+                  <button className="min-h-[300px] rounded-[4rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-4 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
                      <Plus className="h-10 w-10 text-slate-100 group-hover:text-accent transition-colors" strokeWidth={3} />
                      <span className="text-[10px] font-black text-slate-200 group-hover:text-accent uppercase tracking-widest">GÖREV EKLE</span>
                   </button>
@@ -330,26 +323,27 @@ export default function PlanningPage() {
         </div>
       </div>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="rounded-[4rem] border-none shadow-2xl p-12 bg-white max-w-lg">
-           <DialogHeader className="space-y-4">
-              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase leading-none">GÖREVİ <span className="text-accent">REVİZE ET</span></DialogTitle>
-              <DialogDescription className="font-medium italic">Kişisel kaynaklarını ve başlığı güncelleyin.</DialogDescription>
+           <DialogHeader className="mb-6">
+              <DialogTitle className="text-4xl font-black italic tracking-tighter text-primary uppercase">GÖREV <span className="text-accent">DÜZENLE</span></DialogTitle>
+              <DialogDescription className="font-medium italic">Görevi ve kaynak linklerini güncelleyin.</DialogDescription>
            </DialogHeader>
            {editingBlock && (
-             <div className="space-y-8 pt-6">
-                <div className="space-y-3">
-                  <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">KONU / GÖREV ADI</Label>
+             <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase opacity-40 ml-4 italic">GÖREV ADI</Label>
                   <Input value={editingBlock.topic} onChange={(e) => setEditingBlock({...editingBlock, topic: e.target.value, isManuallyEdited: true})} className="h-16 rounded-2xl bg-slate-50 border-none shadow-inner font-bold text-lg" />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                   <div className="space-y-3">
-                      <Label className="text-[9px] font-black uppercase opacity-40 ml-4">YOUTUBE URL</Label>
-                      <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl bg-slate-50 border-none text-xs" placeholder="https://..." />
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase opacity-40 ml-4">YOUTUBE</Label>
+                      <Input value={editingBlock.youtubeUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, youtubeUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none text-xs" />
                    </div>
-                   <div className="space-y-3">
-                      <Label className="text-[9px] font-black uppercase opacity-40 ml-4">ÖZEL KAYNAK</Label>
-                      <Input value={editingBlock.customLinkUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, customLinkUrl: e.target.value, isManuallyEdited: true})} className="h-14 rounded-xl bg-slate-50 border-none text-xs" placeholder="https://..." />
+                   <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase opacity-40 ml-4">MEBİ</Label>
+                      <Input value={editingBlock.mebiUrl || ''} onChange={(e) => setEditingBlock({...editingBlock, mebiUrl: e.target.value, isManuallyEdited: true})} className="h-12 rounded-xl bg-slate-50 border-none text-xs" />
                    </div>
                 </div>
                 <Button onClick={async () => {
@@ -362,9 +356,9 @@ export default function PlanningPage() {
                   });
                   await updateDoc(doc(db, 'studyPlans', user.uid), { masterPlan: newPlan, updatedAt: serverTimestamp() });
                   setIsEditDialogOpen(false);
-                  toast({ title: 'Değişiklikler Mühürlendi', className: "bg-primary text-white rounded-2xl" });
-                }} className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-accent text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl gap-4">
-                  <Save className="h-6 w-6 text-accent" /> GÜNCELLEMEYİ KAYDET
+                  toast({ title: 'Terminal Güncellendi', className: "bg-primary text-white rounded-2xl" });
+                }} className="w-full h-20 rounded-[2.5rem] bg-primary hover:bg-accent text-white font-black text-sm uppercase tracking-widest shadow-2xl gap-4">
+                  <Save className="h-6 w-6 text-accent" /> DEĞİŞİKLİKLERİ MÜHÜRLE
                 </Button>
              </div>
            )}
