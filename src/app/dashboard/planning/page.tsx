@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { doc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { format, parseISO, isBefore, isAfter, addDays, differenceInDays, startOfWeek, endOfWeek } from 'date-fns';
+import { format, parseISO, isBefore, isAfter, addDays, differenceInDays } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import {
   Dialog,
@@ -29,7 +29,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
-// --- ADAPTIVE GENERATION ENGINE WITH ZERO-LOSS PROTECTION ---
+/**
+ * @fileOverview YKS TM Sözel Master - Planning Page
+ * v39 Ultra Modern Design & Omni-Sync Logic
+ */
+
 const generateAdaptivePlan = (
   startDateStr: string,
   endDateStr: string,
@@ -37,11 +41,11 @@ const generateAdaptivePlan = (
   existingPlan: any[] = []
 ) => {
   const startDate = parseISO(startDateStr);
-  const aytDate = parseISO('2026-12-01');
+  const aytDate = parseISO('2024-12-01'); // 2024 için güncellendi
   const endDate = parseISO(endDateStr);
   const daysInterval = differenceInDays(endDate, startDate);
 
-  if (daysInterval < 0) return [];
+  if (daysInterval < 0) return existingPlan;
 
   const finishedSet = new Set(Object.values(completedTopics).flat());
   const lessonPointers: Record<string, number> = {};
@@ -71,11 +75,11 @@ const generateAdaptivePlan = (
     const isAytStarted = !isBefore(currentDate, aytDate);
     
     const existingDay = existingPlan.find(d => d.date === dateStr);
-    const dailyBlocks = [];
+    const dailyBlocks: any[] = [];
 
     const getProtectedBlock = (time: string, defaultData: any) => {
       const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      // Data Shield: Protect completed, edited or linked blocks
+      // DATA SHIELD: Protect completed or manually modified blocks
       if (existing && (
         existing.status === 'done' || 
         existing.isManuallyEdited || 
@@ -96,6 +100,7 @@ const generateAdaptivePlan = (
       };
     };
 
+    // 10:00 - Ana Branş
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
@@ -105,6 +110,7 @@ const generateAdaptivePlan = (
       examType: isAytStarted ? 'AYT' : 'TYT'
     }));
 
+    // 11:00 - İkinci Branş
     const p2Lessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = p2Lessons[(i + 2) % p2Lessons.length];
     dailyBlocks.push(getProtectedBlock('11:00', {
@@ -113,12 +119,14 @@ const generateAdaptivePlan = (
       examType: 'TYT'
     }));
 
+    // 12:00 - Stratejik Tekrar
     dailyBlocks.push(getProtectedBlock('12:00', {
       lesson: 'STRATEJİK TEKRAR',
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
       examType: 'GENEL'
     }));
 
+    // 15:00 - Paragraf
     dailyBlocks.push(getProtectedBlock('15:00', {
       lesson: 'TYT TÜRKÇE',
       topic: '20 ADET PARAGRAF KONDİSYONU',
@@ -156,12 +164,12 @@ export default function PlanningPage() {
     return studyPlan.masterPlan.filter((d: any) => 
       !isBefore(parseISO(d.date), parseISO(startDate)) && 
       !isAfter(parseISO(d.date), parseISO(endDate))
-    );
+    ).sort((a: any, b: any) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
   }, [studyPlan, startDate, endDate]);
 
   const stats = useMemo(() => {
     if (!studyPlan?.masterPlan) return { planned: 0, completed: 0, missing: 0, rate: 0 };
-    const total = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.length || 0), 0);
+    const total = studyPlan.masterPlan.length * 4;
     const done = studyPlan.masterPlan.reduce((acc: number, day: any) => acc + (day.blocks?.filter((b: any) => b.status === 'done').length || 0), 0);
     return { planned: total, completed: done, missing: total - done, rate: Math.round((done / (total || 1)) * 100) };
   }, [studyPlan]);
@@ -200,33 +208,20 @@ export default function PlanningPage() {
         updatedAt: serverTimestamp()
       }, { merge: true });
       toast({ 
-        title: "DİNAMİK SENKRONİZASYON BAŞARILI", 
-        description: "Mevcut verileriniz korundu, boşluklar müfredatla dolduruldu.",
-        className: "bg-primary text-white rounded-2xl"
+        title: "DİNAMİK SENKRONİZASYON TAMAMLANDI", 
+        description: "Verileriniz korundu, takvim güncellendi.",
+        className: "bg-[#0F172A] text-white border-accent/20 rounded-2xl"
       });
     } catch (e) {
+      console.error(e);
       toast({ variant: 'destructive', title: 'Hata oluştu' });
     } finally {
       setIsRegenerating(false);
     }
   };
 
-  const handleQuickFilter = (type: string) => {
-    const now = new Date();
-    if (type === 'today') {
-      const d = format(now, 'yyyy-MM-dd');
-      setStartDate(d); setEndDate(d);
-    } else if (type === 'week') {
-      setStartDate(format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-      setEndDate(format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd'));
-    } else if (type === 'year') {
-      setStartDate('2024-09-01');
-      setEndDate('2025-06-15');
-    }
-  };
-
   return (
-    <div className="w-full bg-[#F8FAFC] min-h-screen pb-20 font-body">
+    <div className="w-full bg-[#F8FAFC] min-h-screen pb-20">
       <div className="mx-auto w-full max-w-[1400px] px-6 py-12 space-y-12">
         <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-10">
           <div className="space-y-4">
@@ -235,8 +230,8 @@ export default function PlanningPage() {
                 <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-10 w-10 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
              </div>
              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-accent/20"><Calendar className="h-3.5 w-3.5" /> TERMINAL 39.0</div>
-                <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-[#0F172A] uppercase leading-none">Akademik <br /><span className="text-accent">Planlama</span></h2>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic"><Calendar className="h-3.5 w-3.5" /> TERMINAL 39.0</div>
+                <h2 className="text-6xl font-bold tracking-tighter text-[#0F172A] uppercase leading-none">Akademik <br /><span className="text-accent">Planlama</span></h2>
              </div>
           </div>
 
@@ -253,13 +248,6 @@ export default function PlanningPage() {
                 <Button onClick={handleRegeneratePlan} disabled={isRegenerating} className="h-12 px-8 rounded-xl bg-[#0F172A] hover:bg-accent text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-2xl transition-all">
                    {isRegenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-accent" />} RAPORU ÇALIŞTIR
                 </Button>
-             </div>
-             <div className="flex gap-2 justify-end">
-                {['today', 'week', 'year'].map(f => (
-                  <button key={f} onClick={() => handleQuickFilter(f)} className="px-4 py-2 rounded-lg font-black text-[8px] uppercase tracking-widest text-primary/40 hover:bg-slate-100 hover:text-primary transition-all">
-                    {f === 'today' ? 'BUGÜN' : f === 'week' ? 'HAFTA' : 'YIL'}
-                  </button>
-                ))}
              </div>
           </div>
         </header>
@@ -334,7 +322,7 @@ export default function PlanningPage() {
                   })}
                   <button className="min-h-[280px] rounded-[3rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-4 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
                      <Plus className="h-10 w-10 text-slate-100 group-hover:text-accent transition-colors" strokeWidth={3} />
-                     <span className="text-[10px] font-black text-slate-200 group-hover:text-accent uppercase tracking-widest">YENİ GÖREV EKLE</span>
+                     <span className="text-[10px] font-black text-slate-200 group-hover:text-accent uppercase tracking-widest">GÖREV EKLE</span>
                   </button>
                </div>
             </div>
@@ -385,4 +373,3 @@ export default function PlanningPage() {
     </div>
   );
 }
-
