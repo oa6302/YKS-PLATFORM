@@ -37,7 +37,7 @@ interface TaskLink {
 }
 
 /**
- * MASTER ADAPTIVE PLANNER v72.1 - Precision Resource Integration
+ * MASTER ADAPTIVE PLANNER v73.0 - Precise Mapping Integration
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -82,11 +82,11 @@ const generateAdaptivePlan = (
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
-    // Hassas Branş Kontrolü v72.1
+    // Hassas Branş Kontrolü v73.0 Mapping
     if (lowerLesson.includes('tarih')) {
-      links.push({ id: `yt_tarih_${Date.now()}`, title: 'BENİM HOCAM TARİH (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+      links.push({ id: `yt_tarih_${Date.now()}`, title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     } else if (lowerLesson.includes('coğrafya')) {
-      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYANIN KODLARI (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYA VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
     }
     return links;
   };
@@ -255,10 +255,11 @@ export default function PlanningPage() {
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
+    // v73 Mapping in AI Recommendations
     if (lowerLesson.includes('tarih')) {
-      recommendations.push({ id: 'rec_tarih', title: 'BENİM HOCAM TARİH (PLAYLIST)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+      recommendations.push({ id: 'rec_tarih', title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     } else if (lowerLesson.includes('coğrafya')) {
-      recommendations.push({ id: 'rec_cografya', title: 'COĞRAFYANIN KODLARI (PLAYLIST)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+      recommendations.push({ id: 'rec_cografya', title: 'COĞRAFYA VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
     }
 
     recommendations.push({ id: 'rec_yt_genel', title: `${topic} KONU ANLATIMI (YT)`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+konu+anlatımı`, type: 'youtube' });
@@ -309,7 +310,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v72.1</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v73.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -402,7 +403,7 @@ export default function PlanningPage() {
               <div className="p-12 space-y-10 overflow-y-auto max-h-[85vh] scrollbar-hide">
                  <DialogHeader className="mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10 w-fit mb-4">
-                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v72.1
+                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v73.0
                     </div>
                     <DialogTitle className="text-6xl font-black italic tracking-tighter text-primary uppercase leading-[0.85]">GÖREV <br /><span className="text-accent">TERMİNALİ</span></DialogTitle>
                     <DialogDescription className="font-medium italic opacity-60 text-lg">Görevi, tarih aralığını ve resmi kaynakları yönetin.</DialogDescription>

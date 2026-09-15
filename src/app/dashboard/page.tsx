@@ -17,7 +17,7 @@ import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 const AYT_START_DATE = '2026-12-01';
 
 /**
- * MASTER ADAPTIVE PLANNER v72.0 - Precision Resource Integration
+ * MASTER ADAPTIVE PLANNER v73.0 - Precise Mapping Integration
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
@@ -62,13 +62,13 @@ export const generateAdaptivePlan = (
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
-    // Tarih Özel Playlist - Hassas Kontrol
+    // Tarih Özel Playlist - v73 Mapping
     if (lowerLesson.includes('tarih')) {
-      links.push({ id: `yt_tarih_${Date.now()}`, title: 'BENİM HOCAM TARİH (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+      links.push({ id: `yt_tarih_${Date.now()}`, title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     }
-    // Coğrafya Özel Playlist - Hassas Kontrol
+    // Coğrafya Özel Playlist - v73 Mapping
     if (lowerLesson.includes('coğrafya')) {
-      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYANIN KODLARI (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYA VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
     }
 
     return links;
