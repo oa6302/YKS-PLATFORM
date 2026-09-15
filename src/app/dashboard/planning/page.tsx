@@ -37,7 +37,7 @@ interface TaskLink {
 }
 
 /**
- * MASTER ADAPTIVE PLANNER v70.0 - Official Resource Integration
+ * MASTER ADAPTIVE PLANNER v71.0 - Official Resource & Playlist Integration
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -73,6 +73,22 @@ const generateAdaptivePlan = (
     return 'GENEL TEKRAR';
   };
 
+  const getAutoLinks = (lesson: string, topic: string) => {
+    const links: TaskLink[] = [
+      { id: `mebi_${Date.now()}_1`, title: 'MEBİ İÇERİK PORTALİ', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic)}`, type: 'mebi' },
+      { id: `ogm_ozet_${Date.now()}_2`, title: 'MEBİ KONU ÖZETLERİ', url: 'https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari', type: 'ogm' },
+      { id: `ogm_deneme_${Date.now()}_3`, title: 'MEBİ YKS DENEMELERİ', url: 'https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri', type: 'ogm' }
+    ];
+
+    if (lesson.toLowerCase().includes('tarih')) {
+      links.push({ id: `yt_tarih_${Date.now()}`, title: 'BENİM HOCAM TARİH (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+    }
+    if (lesson.toLowerCase().includes('coğrafya')) {
+      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYANIN KODLARI (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+    }
+    return links;
+  };
+
   for (let i = 0; i <= daysInterval; i++) {
     const currentDate = addDays(startDate, i);
     const dateStr = format(currentDate, 'yyyy-MM-dd');
@@ -87,32 +103,10 @@ const generateAdaptivePlan = (
       if (existing && (
         existing.status === 'done' || 
         existing.isManuallyEdited || 
-        (existing.links && existing.links.length > 3)
+        (existing.links && existing.links.length > 5)
       )) {
         return existing;
       }
-
-      // Otonom Linkler (Konuya Göre)
-      const autoLinks: TaskLink[] = [
-        { 
-          id: `mebi_${Date.now()}_${Math.random()}`, 
-          title: 'MEBİ İÇERİK PORTALI', 
-          url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(defaultData.topic)}`, 
-          type: 'mebi' 
-        },
-        { 
-          id: `ogm_ozet_${Date.now()}_${Math.random()}`, 
-          title: 'MEBİ KONU ÖZETLERİ', 
-          url: 'https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari', 
-          type: 'ogm' 
-        },
-        { 
-          id: `ogm_deneme_${Date.now()}_${Math.random()}`, 
-          title: 'MEBİ YKS DENEMELERİ', 
-          url: 'https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri', 
-          type: 'ogm' 
-        }
-      ];
 
       return { 
         id: `block_${dateStr}_${time.replace(':', '')}`, 
@@ -121,7 +115,7 @@ const generateAdaptivePlan = (
         startDate: dateStr,
         endDate: dateStr,
         status: 'waiting',
-        links: autoLinks,
+        links: getAutoLinks(defaultData.lesson, defaultData.topic),
         isManuallyEdited: false
       };
     };
@@ -129,17 +123,19 @@ const generateAdaptivePlan = (
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
+    const p1T = getNextTopic(p1L, p1Pool);
     dailyBlocks.push(getProtectedBlock('10:00', {
       lesson: p1L,
-      topic: getNextTopic(p1L, p1Pool),
+      topic: p1T,
       examType: isAytStarted ? 'AYT' : 'TYT'
     }));
 
     const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = tytLessons[(i + 2) % tytLessons.length];
+    const p2T = getNextTopic(p2L, TYT_SOZEL_TOPICS);
     dailyBlocks.push(getProtectedBlock('11:00', {
       lesson: p2L,
-      topic: getNextTopic(p2L, TYT_SOZEL_TOPICS),
+      topic: p2T,
       examType: 'TYT'
     }));
 
@@ -245,16 +241,26 @@ export default function PlanningPage() {
   };
 
   const aiRecommendations = useMemo(() => {
-    if (!editingBlock?.topic) return [];
+    if (!editingBlock?.topic || !editingBlock?.lesson) return [];
     const topic = editingBlock.topic;
+    const lesson = editingBlock.lesson;
     const recommendations: TaskLink[] = [
-      { id: 'rec1', title: `${topic} KONU ANLATIMI (YT)`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+konu+anlatımı+oynatma+listesi`, type: 'youtube' },
-      { id: 'rec2', title: 'MEBİ İÇERİK PORTALI', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic)}`, type: 'mebi' },
-      { id: 'rec3', title: 'MEBİ KONU ÖZETLERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' },
-      { id: 'rec4', title: 'MEBİ YKS DENEMELERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri`, type: 'ogm' }
+      { id: 'rec1', title: 'MEBİ İÇERİK PORTALI', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic)}`, type: 'mebi' },
+      { id: 'rec2', title: 'MEBİ KONU ÖZETLERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' },
+      { id: 'rec3', title: 'MEBİ YKS DENEMELERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri`, type: 'ogm' }
     ];
+
+    if (lesson.toLowerCase().includes('tarih')) {
+      recommendations.push({ id: 'rec_tarih', title: 'BENİM HOCAM TARİH (PLAYLIST)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+    }
+    if (lesson.toLowerCase().includes('coğrafya')) {
+      recommendations.push({ id: 'rec_cografya', title: 'COĞRAFYANIN KODLARI (PLAYLIST)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+    }
+
+    recommendations.push({ id: 'rec_yt_genel', title: `${topic} KONU ANLATIMI (YT)`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+konu+anlatımı`, type: 'youtube' });
+
     return recommendations;
-  }, [editingBlock?.topic]);
+  }, [editingBlock?.topic, editingBlock?.lesson]);
 
   const handleCreateProgram = async () => {
     if (!db || !user || !userData) return;
@@ -270,7 +276,7 @@ export default function PlanningPage() {
       }, { merge: true });
       toast({ 
         title: "PROGRAM SENKRONİZE EDİLDİ", 
-        description: "Yıllık strateji ve resmi kaynaklar terminale mühürlendi.",
+        description: "Resmi kaynaklar ve özel çalma listeleri terminale mühürlendi.",
         className: "bg-[#0F172A] text-white rounded-[2rem] shadow-2xl"
       });
     } catch (e) {
@@ -299,7 +305,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v70.0</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v71.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -370,9 +376,6 @@ export default function PlanningPage() {
                                      <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover/link:opacity-40 transition-opacity" />
                                   </a>
                                 ))}
-                                {(!block.links || block.links.length === 0) && (
-                                  <p className="text-[9px] text-center italic opacity-20 py-4">Link bulunamadı</p>
-                                )}
                              </div>
                           </div>
 
@@ -384,10 +387,6 @@ export default function PlanningPage() {
                     </Card>
                   );
                 })}
-                <button className="min-h-[550px] rounded-[3.5rem] border-4 border-dashed border-slate-100 flex flex-col items-center justify-center gap-6 hover:bg-accent/5 hover:border-accent transition-all group bg-white">
-                   <Plus className="h-12 w-12 text-slate-100 group-hover:text-accent" strokeWidth={3} />
-                   <span className="text-[12px] font-black text-slate-200 group-hover:text-accent uppercase tracking-[0.3em]">GÖREV EKLE</span>
-                </button>
              </div>
           </div>
         ))}
@@ -399,7 +398,7 @@ export default function PlanningPage() {
               <div className="p-12 space-y-10 overflow-y-auto max-h-[85vh] scrollbar-hide">
                  <DialogHeader className="mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10 w-fit mb-4">
-                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v70.0
+                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v71.0
                     </div>
                     <DialogTitle className="text-6xl font-black italic tracking-tighter text-primary uppercase leading-[0.85]">GÖREV <br /><span className="text-accent">TERMİNALİ</span></DialogTitle>
                     <DialogDescription className="font-medium italic opacity-60 text-lg">Görevi, tarih aralığını ve resmi kaynakları yönetin.</DialogDescription>

@@ -17,7 +17,7 @@ import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 const AYT_START_DATE = '2026-12-01';
 
 /**
- * MASTER ADAPTIVE PLANNER v70.0 - Official Resource Integration
+ * MASTER ADAPTIVE PLANNER v71.0 - Official Resource & Playlist Integration
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
@@ -53,6 +53,25 @@ export const generateAdaptivePlan = (
     return 'GENEL ANALİZ';
   };
 
+  const getAutoLinks = (lesson: string, topic: string) => {
+    const links: any[] = [
+      { id: `mebi_${Date.now()}_1`, title: 'MEBİ İÇERİK PORTALI', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic)}`, type: 'mebi' },
+      { id: `ogm_ozet_${Date.now()}_2`, title: 'MEBİ KONU ÖZETLERİ', url: 'https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari', type: 'ogm' },
+      { id: `ogm_deneme_${Date.now()}_3`, title: 'MEBİ YKS DENEMELERİ', url: 'https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri', type: 'ogm' }
+    ];
+
+    // Tarih Özel Playlist
+    if (lesson.toLowerCase().includes('tarih')) {
+      links.push({ id: `yt_tarih_${Date.now()}`, title: 'BENİM HOCAM TARİH (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
+    }
+    // Coğrafya Özel Playlist
+    if (lesson.toLowerCase().includes('coğrafya')) {
+      links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYANIN KODLARI (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
+    }
+
+    return links;
+  };
+
   for (let i = 0; i <= daysInterval; i++) {
     const currentDate = addDays(startDate, i);
     const dateStr = format(currentDate, 'yyyy-MM-dd');
@@ -60,14 +79,12 @@ export const generateAdaptivePlan = (
     const isAytStarted = !isBefore(currentDate, aytDate);
     
     const existingDay = existingPlan.find(d => d.date === dateStr);
-    if (existingDay && existingDay.blocks?.some((b: any) => b.status === 'done' || b.isManuallyEdited || (b.links && b.links.length > 3))) {
+    if (existingDay && existingDay.blocks?.some((b: any) => b.status === 'done' || b.isManuallyEdited || (b.links && b.links.length > 5))) {
       plan.push(existingDay);
       continue;
     }
 
-    const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const dailyBlocks: any[] = [];
-
     const pool1 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const lessons1 = Object.keys(pool1);
     const lesson1 = lessons1[i % lessons1.length];
@@ -80,13 +97,10 @@ export const generateAdaptivePlan = (
       topic: topic1,
       status: 'waiting',
       examType: isAytStarted ? 'AYT' : 'TYT',
-      links: [
-        { id: `mebi_1_${Date.now()}`, title: 'MEBİ İÇERİK', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic1)}`, type: 'mebi' },
-        { id: `ogm_1_${Date.now()}`, title: 'MEBİ ÖZET KİTAP', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' },
-        { id: `deneme_1_${Date.now()}`, title: 'MEBİ YKS DENEME', url: `https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri`, type: 'ogm' }
-      ]
+      links: getAutoLinks(lesson1, topic1)
     });
 
+    const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const lesson2 = tytLessons[(i + 1) % tytLessons.length];
     const topic2 = getNextTopic(lesson2, TYT_SOZEL_TOPICS);
     dailyBlocks.push({
@@ -96,10 +110,7 @@ export const generateAdaptivePlan = (
       topic: topic2,
       status: 'waiting',
       examType: 'TYT',
-      links: [
-        { id: `mebi_2_${Date.now()}`, title: 'MEBİ İÇERİK', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic2)}`, type: 'mebi' },
-        { id: `ogm_2_${Date.now()}`, title: 'MEBİ ÖZET KİTAP', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' }
-      ]
+      links: getAutoLinks(lesson2, topic2)
     });
 
     dailyBlocks.push({

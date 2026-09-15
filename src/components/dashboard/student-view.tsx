@@ -141,7 +141,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
         <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> AKADEMİK KOMUTA v69.0
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> AKADEMİK KOMUTA v71.0
             </div>
             <h2 className="text-6xl md:text-7xl font-black italic tracking-tighter text-primary uppercase leading-[0.9]">
               Bugünkü <br /><span className="text-accent">Blokların</span>
@@ -202,7 +202,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
                 </div>
 
                 <div className="space-y-8">
-                   <div className="bg-slate-50 rounded-[2.5rem] p-8 space-y-4 shadow-inner border border-white max-h-[180px] overflow-y-auto scrollbar-hide">
+                   <div className="bg-slate-50 rounded-[2.5rem] p-8 space-y-4 shadow-inner border border-white max-h-[220px] overflow-y-auto scrollbar-hide">
                       <div className="flex items-center justify-between mb-2">
                          <span className="text-[9px] font-black text-primary/30 uppercase tracking-[0.4em] italic">KAYNAKLAR</span>
                          <Zap className="h-4 w-4 text-accent animate-pulse" />
