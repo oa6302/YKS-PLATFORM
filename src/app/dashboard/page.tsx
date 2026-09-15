@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useDoc } from '@/firebase';
@@ -14,10 +13,11 @@ import {
 import { tr } from 'date-fns/locale';
 import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 
-const AYT_START_DATE = '2026-12-01';
+// TALEBE GÖRE GÜNCELLENDİ: AYT Başlangıcı 1 Ocak 2027
+const AYT_START_DATE = '2027-01-01';
 
 /**
- * MASTER ADAPTIVE PLANNER v73.0 - Precise Mapping Integration
+ * MASTER ADAPTIVE PLANNER v74.0 - Persistence Integration
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
@@ -62,11 +62,9 @@ export const generateAdaptivePlan = (
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
-    // Tarih Özel Playlist - v73 Mapping
     if (lowerLesson.includes('tarih')) {
       links.push({ id: `yt_tarih_${Date.now()}`, title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     }
-    // Coğrafya Özel Playlist - v73 Mapping
     if (lowerLesson.includes('coğrafya')) {
       links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYA VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
     }
@@ -81,7 +79,13 @@ export const generateAdaptivePlan = (
     const isAytStarted = !isBefore(currentDate, aytDate);
     
     const existingDay = existingPlan.find(d => d.date === dateStr);
-    if (existingDay && existingDay.blocks?.some((b: any) => b.status === 'done' || b.isManuallyEdited || (b.links && b.links.length > 5))) {
+    
+    // KORUMA MANTIĞI: Eğer gün manuel düzenlendiyse veya mühürlendiyse koru.
+    if (existingDay && (existingDay.isManuallyEdited || existingDay.blocks?.some((b: any) => 
+      b.status === 'done' || 
+      b.isManuallyEdited || 
+      (b.links && b.links.length > 5)
+    ))) {
       plan.push(existingDay);
       continue;
     }

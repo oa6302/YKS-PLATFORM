@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useDoc, useFirestore } from '@/firebase';
@@ -28,7 +27,8 @@ import { generateAdaptivePlan } from './page';
 
 const DEFAULT_PLAN_START = '2026-09-14';
 const DEFAULT_PLAN_END = '2027-06-15';
-const AYT_START_DATE = '2026-12-01';
+// TALEBE GÖRE GÜNCELLENDİ: AYT 1 Ocak 2027
+const AYT_START_DATE = '2027-01-01';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user } = useUser();
@@ -89,7 +89,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row relative overflow-hidden">
-      {/* Sidebar v67 */}
       <aside className={cn(
         "w-[300px] bg-[#0F172A] text-white flex flex-col fixed md:sticky inset-y-0 left-0 z-[100] transition-transform duration-500 md:translate-x-0 h-screen shadow-[10px_0_60px_rgba(0,0,0,0.3)]",
         sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -127,8 +126,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             })}
           </nav>
         </ScrollArea>
-
-        {/* Status card removed per user request */}
         <div className="p-8 h-8" />
       </aside>
 

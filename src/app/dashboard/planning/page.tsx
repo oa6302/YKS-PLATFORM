@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -37,7 +36,7 @@ interface TaskLink {
 }
 
 /**
- * MASTER ADAPTIVE PLANNER v73.0 - Precise Mapping Integration
+ * MASTER ADAPTIVE PLANNER v74.0 - AYT 1 Ocak 2027 & Persistence
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -46,7 +45,7 @@ const generateAdaptivePlan = (
   existingPlan: any[] = []
 ) => {
   const startDate = parseISO(startDateStr);
-  const aytDate = parseISO('2026-12-01'); 
+  const aytDate = parseISO('2027-01-01'); // TALEBE GÖRE GÜNCELLENDİ
   const endDate = parseISO(endDateStr);
   const daysInterval = differenceInDays(endDate, startDate);
 
@@ -82,7 +81,6 @@ const generateAdaptivePlan = (
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
-    // Hassas Branş Kontrolü v73.0 Mapping
     if (lowerLesson.includes('tarih')) {
       links.push({ id: `yt_tarih_${Date.now()}`, title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     } else if (lowerLesson.includes('coğrafya')) {
@@ -98,60 +96,65 @@ const generateAdaptivePlan = (
     const isAytStarted = !isBefore(currentDate, aytDate);
     
     const existingDay = existingPlan.find(d => d.date === dateStr);
+    
+    // KORUMA: Manuel değişiklikleri ve silinenleri koru
+    if (existingDay && (existingDay.isManuallyEdited || existingDay.blocks?.some((b: any) => 
+      b.status === 'done' || 
+      b.isManuallyEdited || 
+      (b.links && b.links.length > 5)
+    ))) {
+      plan.push(existingDay);
+      continue;
+    }
+
     const dailyBlocks: any[] = [];
-
-    const getProtectedBlock = (time: string, defaultData: any) => {
-      const existing = existingDay?.blocks?.find((b: any) => b.time === time);
-      if (existing && (
-        existing.status === 'done' || 
-        existing.isManuallyEdited || 
-        (existing.links && existing.links.length > 5)
-      )) {
-        return existing;
-      }
-
-      return { 
-        id: `block_${dateStr}_${time.replace(':', '')}`, 
-        time, 
-        ...defaultData,
-        startDate: dateStr,
-        endDate: dateStr,
-        status: 'waiting',
-        links: getAutoLinks(defaultData.lesson, defaultData.topic),
-        isManuallyEdited: false
-      };
-    };
-
     const p1Pool = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const p1Lessons = Object.keys(p1Pool);
     const p1L = p1Lessons[i % p1Lessons.length];
     const p1T = getNextTopic(p1L, p1Pool);
-    dailyBlocks.push(getProtectedBlock('10:00', {
+    
+    dailyBlocks.push({ 
+      id: `block_${dateStr}_1000`, 
+      time: '10:00', 
       lesson: p1L,
       topic: p1T,
-      examType: isAytStarted ? 'AYT' : 'TYT'
-    }));
+      examType: isAytStarted ? 'AYT' : 'TYT',
+      status: 'waiting',
+      links: getAutoLinks(p1L, p1T),
+      isManuallyEdited: false
+    });
 
     const tytLessons = Object.keys(TYT_SOZEL_TOPICS);
     const p2L = tytLessons[(i + 2) % tytLessons.length];
     const p2T = getNextTopic(p2L, TYT_SOZEL_TOPICS);
-    dailyBlocks.push(getProtectedBlock('11:00', {
+    dailyBlocks.push({ 
+      id: `block_${dateStr}_1100`, 
+      time: '11:00', 
       lesson: p2L,
       topic: p2T,
-      examType: 'TYT'
-    }));
+      examType: 'TYT',
+      status: 'waiting',
+      links: getAutoLinks(p2L, p2T),
+      isManuallyEdited: false
+    });
 
-    dailyBlocks.push(getProtectedBlock('12:00', {
+    dailyBlocks.push({
+      id: `block_${dateStr}_1200`,
+      time: '12:00',
       lesson: 'STRATEJİK TEKRAR',
       topic: 'DÜNÜN KRİTİK KAZANIMLARI',
+      status: 'waiting',
       examType: 'GENEL'
-    }));
+    });
 
-    dailyBlocks.push(getProtectedBlock('15:00', {
+    dailyBlocks.push({
+      id: `block_${dateStr}_1500`,
+      time: '15:00',
       lesson: 'TYT TÜRKÇE',
       topic: '20 ADET PARAGRAF KONDİSYONU',
+      status: 'waiting',
       examType: 'TYT'
-    }));
+    });
 
     plan.push({ date: dateStr, day: dayName, blocks: dailyBlocks });
   }
@@ -195,6 +198,7 @@ export default function PlanningPage() {
       if (day.date === dayDate) {
         return {
           ...day,
+          isManuallyEdited: action === 'delete' ? true : day.isManuallyEdited, // Günü manuel olarak mühürle
           blocks: day.blocks.map((b: any) => {
             if (b.id === blockId) {
               if (action === 'done') return { ...b, status: b.status === 'done' ? 'waiting' : 'done' };
@@ -255,7 +259,6 @@ export default function PlanningPage() {
 
     const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
 
-    // v73 Mapping in AI Recommendations
     if (lowerLesson.includes('tarih')) {
       recommendations.push({ id: 'rec_tarih', title: 'TARİH VİDEO DERSLERİ', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     } else if (lowerLesson.includes('coğrafya')) {
@@ -281,7 +284,7 @@ export default function PlanningPage() {
       }, { merge: true });
       toast({ 
         title: "PROGRAM SENKRONİZE EDİLDİ", 
-        description: "Akademik takvim yıllık stratejiye göre mühürlendi.",
+        description: "Akademik takvim yıllık stratejiye göre mühürlendi. Değişiklikleriniz korundu.",
         className: "bg-[#0F172A] text-white rounded-[2rem] shadow-2xl"
       });
     } catch (e) {
@@ -310,7 +313,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v73.0</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v74.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -403,7 +406,7 @@ export default function PlanningPage() {
               <div className="p-12 space-y-10 overflow-y-auto max-h-[85vh] scrollbar-hide">
                  <DialogHeader className="mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10 w-fit mb-4">
-                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v73.0
+                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v74.0
                     </div>
                     <DialogTitle className="text-6xl font-black italic tracking-tighter text-primary uppercase leading-[0.85]">GÖREV <br /><span className="text-accent">TERMİNALİ</span></DialogTitle>
                     <DialogDescription className="font-medium italic opacity-60 text-lg">Görevi, tarih aralığını ve resmi kaynakları yönetin.</DialogDescription>
@@ -506,7 +509,11 @@ export default function PlanningPage() {
                    if (!db || !user || !studyPlan) return;
                    const newPlan = studyPlan.masterPlan.map((day: any) => {
                      if (day.date === editingBlock.date) {
-                       return { ...day, blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) };
+                       return { 
+                         ...day, 
+                         isManuallyEdited: true, // Gün bazında mühürleme
+                         blocks: day.blocks.map((b: any) => b.id === editingBlock.id ? { ...editingBlock } : b) 
+                       };
                      }
                      return day;
                    });
