@@ -17,7 +17,7 @@ import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 const AYT_START_DATE = '2026-12-01';
 
 /**
- * MASTER ADAPTIVE PLANNER v71.0 - Official Resource & Playlist Integration
+ * MASTER ADAPTIVE PLANNER v72.0 - Precision Resource Integration
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
@@ -60,12 +60,14 @@ export const generateAdaptivePlan = (
       { id: `ogm_deneme_${Date.now()}_3`, title: 'MEBİ YKS DENEMELERİ', url: 'https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri', type: 'ogm' }
     ];
 
-    // Tarih Özel Playlist
-    if (lesson.toLowerCase().includes('tarih')) {
+    const lowerLesson = lesson.toLocaleLowerCase('tr-TR');
+
+    // Tarih Özel Playlist - Hassas Kontrol
+    if (lowerLesson.includes('tarih')) {
       links.push({ id: `yt_tarih_${Date.now()}`, title: 'BENİM HOCAM TARİH (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLnBnugScc-7Lnnh4bZMz8QVyIYSXtULr_', type: 'youtube' });
     }
-    // Coğrafya Özel Playlist
-    if (lesson.toLowerCase().includes('coğrafya')) {
+    // Coğrafya Özel Playlist - Hassas Kontrol
+    if (lowerLesson.includes('coğrafya')) {
       links.push({ id: `yt_cografya_${Date.now()}`, title: 'COĞRAFYANIN KODLARI (VİDEO)', url: 'https://www.youtube.com/playlist?list=PLCLfupK6Ie8Uow9njwNnXclaTqhLClYiA', type: 'youtube' });
     }
 
