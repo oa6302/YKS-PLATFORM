@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useDoc, useFirestore } from '@/firebase';
@@ -17,7 +18,8 @@ import {
   Globe,
   Library,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -31,6 +33,13 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+interface TaskLink {
+  id: string;
+  title: string;
+  url: string;
+  type: 'youtube' | 'mebi' | 'eba' | 'ogm' | 'other';
+}
+
 interface StudentViewProps {
   user: any;
   userData: any;
@@ -43,11 +52,9 @@ interface StudyBlock {
   status: 'planned' | 'done' | 'skipped' | 'waiting';
   time: string;
   examType?: string;
-  youtubeUrl?: string;
-  mebiUrl?: string;
-  ebaUrl?: string;
-  ogmUrl?: string;
-  customLinkUrl?: string;
+  links?: TaskLink[];
+  startDate?: string;
+  endDate?: string;
 }
 
 interface StudyDay {
@@ -109,6 +116,16 @@ export function StudentView({ user, userData }: StudentViewProps) {
     }
   };
 
+  const getLinkIcon = (type: string) => {
+    switch (type) {
+      case 'youtube': return <Youtube className="h-4 w-4 text-rose-600" />;
+      case 'mebi': return <School className="h-4 w-4 text-orange-500" />;
+      case 'eba': return <Globe className="h-4 w-4 text-blue-500" />;
+      case 'ogm': return <Library className="h-4 w-4 text-emerald-500" />;
+      default: return <LinkIcon className="h-4 w-4 text-primary" />;
+    }
+  };
+
   if (planLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5 p-10">
@@ -124,7 +141,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
         <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-accent" /> AKADEMİK KOMUTA v66.0
+              <Sparkles className="h-3.5 w-3.5 text-accent" /> AKADEMİK KOMUTA v69.0
             </div>
             <h2 className="text-6xl md:text-7xl font-black italic tracking-tighter text-primary uppercase leading-[0.9]">
               Bugünkü <br /><span className="text-accent">Blokların</span>
@@ -152,7 +169,7 @@ export function StudentView({ user, userData }: StudentViewProps) {
               <Card 
                 key={block.id}
                 className={cn(
-                  "min-h-[500px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
+                  "min-h-[550px] p-10 rounded-[3.5rem] border-none transition-all duration-500 hover:-translate-y-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.1)] group bg-white flex flex-col justify-between",
                   isDone && "opacity-60 grayscale-[0.5]"
                 )}
               >
@@ -185,18 +202,25 @@ export function StudentView({ user, userData }: StudentViewProps) {
                 </div>
 
                 <div className="space-y-8">
-                   <div className="bg-slate-50 rounded-[2.5rem] p-8 space-y-6 shadow-inner border border-white">
-                      <div className="flex items-center justify-between">
-                         <span className="text-[9px] font-black text-primary/30 uppercase tracking-[0.4em] italic">AKADEMİK ARAÇLAR</span>
+                   <div className="bg-slate-50 rounded-[2.5rem] p-8 space-y-4 shadow-inner border border-white max-h-[180px] overflow-y-auto scrollbar-hide">
+                      <div className="flex items-center justify-between mb-2">
+                         <span className="text-[9px] font-black text-primary/30 uppercase tracking-[0.4em] italic">KAYNAKLAR</span>
                          <Zap className="h-4 w-4 text-accent animate-pulse" />
                       </div>
                       
-                      <div className="flex justify-between items-center gap-2">
-                         <a href={block.youtubeUrl || `https://www.youtube.com/results?search_query=${block.lesson}+${block.topic}`} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.youtubeUrl ? "text-rose-600 scale-110 shadow-rose-200 border-2 border-rose-100" : "text-slate-300 hover:text-rose-600")} title="YouTube"><Youtube className="h-6 w-6" /></a>
-                         <a href={block.mebiUrl || 'https://mebi.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.mebiUrl ? "text-orange-500 scale-110 shadow-orange-200 border-2 border-orange-100" : "text-slate-300 hover:text-orange-500")} title="MEBİ"><School className="h-6 w-6" /></a>
-                         <a href={block.ebaUrl || 'https://www.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ebaUrl ? "text-blue-500 scale-110 shadow-blue-200 border-2 border-blue-100" : "text-slate-300 hover:text-blue-500")} title="EBA"><Globe className="h-6 w-6" /></a>
-                         <a href={block.ogmUrl || 'https://ogmmateryal.eba.gov.tr/'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.ogmUrl ? "text-emerald-500 scale-110 shadow-emerald-200 border-2 border-emerald-100" : "text-slate-300 hover:text-emerald-500")} title="ÖGM Materyal"><Library className="h-6 w-6" /></a>
-                         <a href={block.customLinkUrl || '#'} target="_blank" className={cn("h-12 w-12 rounded-xl flex items-center justify-center transition-all shadow-md bg-white", block.customLinkUrl ? "text-primary scale-110 shadow-primary/20 border-2 border-primary/10" : "text-slate-300 hover:text-primary")} title="Özel Link"><LinkIcon className="h-6 w-6" /></a>
+                      <div className="grid gap-2">
+                         {block.links?.map((link: TaskLink) => (
+                           <a key={link.id} href={link.url} target="_blank" className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border border-slate-50 hover:border-accent transition-all group/link">
+                              <div className="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                                 {getLinkIcon(link.type)}
+                              </div>
+                              <span className="text-[10px] font-black text-primary/60 truncate uppercase">{link.title}</span>
+                              <ExternalLink className="h-3 w-3 ml-auto opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                           </a>
+                         ))}
+                         {(!block.links || block.links.length === 0) && (
+                           <p className="text-[9px] text-center italic opacity-20 py-4 uppercase font-black">Link Yok</p>
+                         )}
                       </div>
                    </div>
 
