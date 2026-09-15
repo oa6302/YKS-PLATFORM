@@ -37,7 +37,7 @@ interface TaskLink {
 }
 
 /**
- * MASTER ADAPTIVE PLANNER v69.0
+ * MASTER ADAPTIVE PLANNER v70.0 - Official Resource Integration
  */
 const generateAdaptivePlan = (
   startDateStr: string,
@@ -87,10 +87,33 @@ const generateAdaptivePlan = (
       if (existing && (
         existing.status === 'done' || 
         existing.isManuallyEdited || 
-        (existing.links && existing.links.length > 0)
+        (existing.links && existing.links.length > 3)
       )) {
         return existing;
       }
+
+      // Otonom Linkler (Konuya Göre)
+      const autoLinks: TaskLink[] = [
+        { 
+          id: `mebi_${Date.now()}_${Math.random()}`, 
+          title: 'MEBİ İÇERİK PORTALI', 
+          url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(defaultData.topic)}`, 
+          type: 'mebi' 
+        },
+        { 
+          id: `ogm_ozet_${Date.now()}_${Math.random()}`, 
+          title: 'MEBİ KONU ÖZETLERİ', 
+          url: 'https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari', 
+          type: 'ogm' 
+        },
+        { 
+          id: `ogm_deneme_${Date.now()}_${Math.random()}`, 
+          title: 'MEBİ YKS DENEMELERİ', 
+          url: 'https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri', 
+          type: 'ogm' 
+        }
+      ];
+
       return { 
         id: `block_${dateStr}_${time.replace(':', '')}`, 
         time, 
@@ -98,7 +121,7 @@ const generateAdaptivePlan = (
         startDate: dateStr,
         endDate: dateStr,
         status: 'waiting',
-        links: [],
+        links: autoLinks,
         isManuallyEdited: false
       };
     };
@@ -223,11 +246,12 @@ export default function PlanningPage() {
 
   const aiRecommendations = useMemo(() => {
     if (!editingBlock?.topic) return [];
-    const topic = editingBlock.topic.toLowerCase();
+    const topic = editingBlock.topic;
     const recommendations: TaskLink[] = [
-      { id: 'rec1', title: 'Konu Anlatımı Oynatma Listesi', url: `https://www.youtube.com/results?search_query=${encodeURIComponent(editingBlock.topic)}+konu+anlatımı+oynatma+listesi`, type: 'youtube' },
-      { id: 'rec2', title: 'MEBİ Konu Testleri', url: `https://mebi.eba.gov.tr/arama?q=${encodeURIComponent(editingBlock.topic)}`, type: 'mebi' },
-      { id: 'rec3', title: 'ÖGM Materyal Çözümlü Sorular', url: `https://ogmmateryal.eba.gov.tr/soru-bankasi?q=${encodeURIComponent(editingBlock.topic)}`, type: 'ogm' }
+      { id: 'rec1', title: `${topic} KONU ANLATIMI (YT)`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+konu+anlatımı+oynatma+listesi`, type: 'youtube' },
+      { id: 'rec2', title: 'MEBİ İÇERİK PORTALI', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic)}`, type: 'mebi' },
+      { id: 'rec3', title: 'MEBİ KONU ÖZETLERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' },
+      { id: 'rec4', title: 'MEBİ YKS DENEMELERİ', url: `https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri`, type: 'ogm' }
     ];
     return recommendations;
   }, [editingBlock?.topic]);
@@ -246,7 +270,7 @@ export default function PlanningPage() {
       }, { merge: true });
       toast({ 
         title: "PROGRAM SENKRONİZE EDİLDİ", 
-        description: "Yıllık strateji terminale saniyeler içinde mühürlendi.",
+        description: "Yıllık strateji ve resmi kaynaklar terminale mühürlendi.",
         className: "bg-[#0F172A] text-white rounded-[2rem] shadow-2xl"
       });
     } catch (e) {
@@ -275,7 +299,7 @@ export default function PlanningPage() {
               <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="h-12 w-12 rounded-xl bg-white shadow-sm border border-slate-100 hover:bg-primary hover:text-white transition-all"><Home className="h-5 w-5" /></Button>
            </div>
            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v69.0</div>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest shadow-xl shadow-accent/20 italic border border-primary/10"><Calendar className="h-3.5 w-3.5" /> OTONOM PLANLAYICI v70.0</div>
               <h2 className="text-6xl font-black tracking-tighter text-[#0F172A] italic uppercase leading-none text-shadow-deep">Akademik <br /><span className="text-accent text-shadow-accent">Terminal</span></h2>
            </div>
         </div>
@@ -375,10 +399,10 @@ export default function PlanningPage() {
               <div className="p-12 space-y-10 overflow-y-auto max-h-[85vh] scrollbar-hide">
                  <DialogHeader className="mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black text-[10px] uppercase tracking-widest italic border border-primary/10 w-fit mb-4">
-                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v69.0
+                      <Sparkles className="h-3.5 w-3.5 text-accent" /> AOS EDITOR v70.0
                     </div>
                     <DialogTitle className="text-6xl font-black italic tracking-tighter text-primary uppercase leading-[0.85]">GÖREV <br /><span className="text-accent">TERMİNALİ</span></DialogTitle>
-                    <DialogDescription className="font-medium italic opacity-60 text-lg">Görevi, tarih aralığını ve sınırsız kaynağı yönetin.</DialogDescription>
+                    <DialogDescription className="font-medium italic opacity-60 text-lg">Görevi, tarih aralığını ve resmi kaynakları yönetin.</DialogDescription>
                  </DialogHeader>
 
                  {editingBlock && (
@@ -405,7 +429,7 @@ export default function PlanningPage() {
                             <PlusCircle className="h-4 w-4 text-accent" />
                          </div>
                          <div className="flex flex-col gap-4">
-                            <Input value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} placeholder="Kaynak Adı (Örn: Paragraf Taktikleri)" className="h-14 rounded-2xl bg-white border-2 border-slate-50 font-bold" />
+                            <Input value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} placeholder="Kaynak Adı (Örn: MEBİ Konu Özeti)" className="h-14 rounded-2xl bg-white border-2 border-slate-50 font-bold" />
                             <div className="flex gap-3">
                                <Input value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} placeholder="URL (YouTube, MEBİ, EBA...)" className="flex-1 h-14 rounded-2xl bg-white border-2 border-slate-50 font-bold" />
                                <Button onClick={handleAddLink} className="h-14 w-14 rounded-2xl bg-primary hover:bg-accent text-white shadow-xl">
@@ -495,4 +519,3 @@ export default function PlanningPage() {
     </div>
   );
 }
-

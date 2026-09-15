@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc } from '@/firebase';
@@ -16,9 +17,7 @@ import { TYT_SOZEL_TOPICS, AYT_SOZEL_TOPICS } from '@/lib/curriculum-data';
 const AYT_START_DATE = '2026-12-01';
 
 /**
- * MASTER ADAPTIVE PLANNER v63.0
- * Yıllık, aylık, haftalık ve günlük hiyerarşiyi yöneten otonom motor.
- * layout.tsx tarafından da kullanılır.
+ * MASTER ADAPTIVE PLANNER v70.0 - Official Resource Integration
  */
 export const generateAdaptivePlan = (
   startDateStr: string,
@@ -61,7 +60,7 @@ export const generateAdaptivePlan = (
     const isAytStarted = !isBefore(currentDate, aytDate);
     
     const existingDay = existingPlan.find(d => d.date === dateStr);
-    if (existingDay && existingDay.blocks?.some((b: any) => b.status === 'done' || b.isManuallyEdited || b.youtubeUrl || b.customLinkUrl)) {
+    if (existingDay && existingDay.blocks?.some((b: any) => b.status === 'done' || b.isManuallyEdited || (b.links && b.links.length > 3))) {
       plan.push(existingDay);
       continue;
     }
@@ -72,23 +71,35 @@ export const generateAdaptivePlan = (
     const pool1 = isAytStarted ? AYT_SOZEL_TOPICS : TYT_SOZEL_TOPICS;
     const lessons1 = Object.keys(pool1);
     const lesson1 = lessons1[i % lessons1.length];
+    const topic1 = getNextTopic(lesson1, pool1);
+
     dailyBlocks.push({
       id: `block_${dateStr}_1000`,
       time: '10:00',
       lesson: lesson1,
-      topic: getNextTopic(lesson1, pool1),
+      topic: topic1,
       status: 'waiting',
-      examType: isAytStarted ? 'AYT' : 'TYT'
+      examType: isAytStarted ? 'AYT' : 'TYT',
+      links: [
+        { id: `mebi_1_${Date.now()}`, title: 'MEBİ İÇERİK', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic1)}`, type: 'mebi' },
+        { id: `ogm_1_${Date.now()}`, title: 'MEBİ ÖZET KİTAP', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' },
+        { id: `deneme_1_${Date.now()}`, title: 'MEBİ YKS DENEME', url: `https://ogmmateryal.eba.gov.tr/mebi-yks-denemeleri`, type: 'ogm' }
+      ]
     });
 
     const lesson2 = tytLessons[(i + 1) % tytLessons.length];
+    const topic2 = getNextTopic(lesson2, TYT_SOZEL_TOPICS);
     dailyBlocks.push({
       id: `block_${dateStr}_1100`,
       time: '11:00',
       lesson: lesson2,
-      topic: getNextTopic(lesson2, TYT_SOZEL_TOPICS),
+      topic: topic2,
       status: 'waiting',
-      examType: 'TYT'
+      examType: 'TYT',
+      links: [
+        { id: `mebi_2_${Date.now()}`, title: 'MEBİ İÇERİK', url: `https://mebi.eba.gov.tr/student/home/content?q=${encodeURIComponent(topic2)}`, type: 'mebi' },
+        { id: `ogm_2_${Date.now()}`, title: 'MEBİ ÖZET KİTAP', url: `https://ogmmateryal.eba.gov.tr/mebi-konu-ozeti-kitaplari`, type: 'ogm' }
+      ]
     });
 
     dailyBlocks.push({
